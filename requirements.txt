@@ -1,0 +1,7 @@
+networkx==3.2.1
+numpy
+tqdm
+matplotlib
+scipy
+heapdict
+pandas
