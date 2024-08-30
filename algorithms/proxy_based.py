@@ -64,7 +64,7 @@ class DegDis(ProxyBasedAlgorithm):
             dd[u] = -d[u]
             t[u] = 0
         # Add vertices to seed set
-        for _ in range(self.budget):
+        for _ in tqdm(range(self.budget), desc="DegDis",position=1, leave=True):
             u, _ = dd.popitem()
             seed_set.append(u)
             for v in self.graph[u]:
@@ -158,6 +158,7 @@ class Group_PR(ProxyBasedAlgorithm):
         # Compute influence-PageRank vector
         fPR = nx.pagerank(self.inverted_graph, alpha=self.d, weight='p')
         delta_dict = {s: (len(influencee) / (1 - self.d)) * fPR[s] for s in self.graph.nodes}
+        progress_bar = tqdm(range(self.budget), desc='Group_PR')
         while len(seed_set) < self.budget:
             # Re-arrange the order of nodes to make delta_s > delta_{s+1}
             delta_dict = dict(sorted(delta_dict.items(), key=lambda item: item[1], reverse=True))
@@ -169,6 +170,7 @@ class Group_PR(ProxyBasedAlgorithm):
                     if delta_dict[s] > delta_max:
                         delta_max, s_max = delta_dict[s], s
             seed_set.append(s_max)
+            progress_bar.update(1)
             influencee.remove(s_max)
             delta_dict[s_max] = 0
         return seed_set

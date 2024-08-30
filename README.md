@@ -13,5 +13,9 @@ NetMax is a python library that provides the implementation of several algorithm
     [ ] Complete the multi-agent algorithm pseudocode
     [X] Implement Decreasing Cascade Diffusion Model
 
+## Ideas
+    - Add a Configuration object to IM
+    - Add a Test class
+
 ## Github links
     - https://github.com/snowgy/Influence_Maximization/blob/master/IMM.pdf (Paper)
