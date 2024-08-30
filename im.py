@@ -4,6 +4,7 @@ from algorithms import simulation_based, proxy_based
 import diffusion_models
 import influence_probabilities
 import time
+from tqdm import tqdm
 
 def activate_node(graph, node, agent):
     graph.nodes[node]['status'] = 'ACTIVE'
@@ -39,7 +40,7 @@ def remove_isolated_nodes(graph):
 
 def simulation(graph, diff_model, agent, seed, r=10000, community=None):
     spread = 0
-    for _ in range(r):
+    for _ in tqdm(range(r), desc="Simulations"):
         active_set = diff_model.activate(graph, agent, seed)
         if community is not None:
             active_set = [node for node in active_set if node in community]

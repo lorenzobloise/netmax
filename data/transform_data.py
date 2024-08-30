@@ -37,7 +37,8 @@ network format:
 '''
 def read_dataset(input_path):
     graph = nx.DiGraph()
-    data_lines = open(input_path, 'r').readlines()
+    with open(input_path, 'r') as f:
+        data_lines = f.readlines()
     node_num = int(data_lines[0].split()[0])
     edge_num = int(data_lines[0].split()[1])
     nodes = [i for i in range(node_num)]

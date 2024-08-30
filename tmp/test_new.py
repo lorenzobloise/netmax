@@ -1,6 +1,5 @@
-from im import IM, simulation
+from im import IM
 from data.transform_data import read_dataset
-import time
 import pandas as pd
 import gc
 
@@ -25,10 +24,10 @@ def calculate_similarities(dataframe):
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 df = pd.DataFrame()
-g = read_dataset('../data/network.txt')
-algos = ['mcgreedy','celf','celfpp','ublf','cga','outdeg','degdis','ubound','group-pr']
+g = read_dataset('../data/BigTestData.txt')
+algos = ['group-pr', 'outdeg', 'degdis']
 for a in algos:
-    im = IM(g, {'Agent_0': 10}, alg=a, diff_model='ic', inf_prob='uniform', r=1000)
+    im = IM(g, {'Agent_0': 40}, alg=a, diff_model='ic', inf_prob='uniform', r=10)
     seed = im.run()
     spread = im.result['spread']
     execution_time = im.result['execution_time']
