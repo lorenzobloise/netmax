@@ -40,7 +40,7 @@ def remove_isolated_nodes(graph):
 
 def simulation(graph, diff_model, agent, seed, r=10000, community=None):
     spread = 0
-    for _ in tqdm(range(r), desc="Simulations"):
+    for _ in tqdm(range(r), desc="Simulations", position=0, leave=True):
         active_set = diff_model.activate(graph, agent, seed)
         if community is not None:
             active_set = [node for node in active_set if node in community]
@@ -63,7 +63,7 @@ def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=
 class IM:
 
     def __init__(self, input_graph: nx.DiGraph, agents: dict, alg: str = 'celf', diff_model: str = 'ic',
-                 inf_prob: str = 'uniform', insert_prob: bool = False, inv_edges: bool = False, r: int = 10000):
+                 inf_prob: str = 'uniform', insert_prob: bool = False, inv_edges: bool = False, r: int = 100):
         """
         Create an instance of the Influence Maximization problem.
         :param input_graph: The input directed graph (networkx.DiGraph).
