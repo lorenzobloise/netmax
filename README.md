@@ -12,10 +12,29 @@ NetMax is a python library that provides the implementation of several algorithm
         [X] Create "proxy_based.py" with the code inside "heuristics.py"
     [ ] Complete the multi-agent algorithm pseudocode
     [X] Implement Decreasing Cascade Diffusion Model
+    [ ] Implement the proxy-based algorithms:
+        [ ] IRIE
+        [ ] SPIN
+        [ ] IMRank
+        [ ] SPM
+        [ ] SP1M
+        [ ] MIA
+        [ ] PMIA
+        [ ] IPA
+        [ ] LDAG
 
 ## Ideas
     - Add a Configuration object to IM
-    - Add a Test class
+    - Implement the sketch-based algorithms:
+        [ ] NewGreIC
+        [ ] StaticGreedy
+        [ ] PrunedMC
+        [ ] SKIM
+        [ ] RIS
+        [ ] TIM
+        [ ] TIM+
+        [ ] BKRIS
+        [ ] SSA
 
 ## Github links
     - https://github.com/snowgy/Influence_Maximization/blob/master/IMM.pdf (Paper)

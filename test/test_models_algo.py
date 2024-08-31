@@ -2,6 +2,12 @@ import unittest
 from data.transform_data import read_dataset
 from im import IM
 import pandas as pd
+import math
+
+
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_colwidth', None)
 
 class MyTestCase(unittest.TestCase):
 
@@ -26,7 +32,7 @@ class MyTestCase(unittest.TestCase):
         # Test BigTestData
         df = pd.DataFrame()
         g = read_dataset('../data/BigTestData.txt')
-        algo = ['group-pr']
+        algo = ['cgina']
         for a in algo:
             im = IM(g, {'Agent_0': 40}, alg=a, diff_model='ic', inf_prob='uniform', r=1)
             seed = im.run()
@@ -48,6 +54,25 @@ class MyTestCase(unittest.TestCase):
         algo = ['group-pr']
         for a in algo:
             im = IM(g, {'Agent_0': 40}, alg=a, diff_model='ic', inf_prob='uniform', r=1)
+            seed = im.run()
+            spread = im.result['spread']
+            execution_time = im.result['execution_time']
+            result_row = {
+                "algorithm": [a],
+                "time": [execution_time],
+                "seed": [seed],
+                "spread": [spread]
+            }
+            df = pd.concat([df, pd.DataFrame(result_row)], ignore_index=True)
+        self.__calculate_similarities__(df)
+
+    def test_twitter_d(self):
+        # Test epinions_d_5
+        df = pd.DataFrame()
+        g = read_dataset('../data/twitter-d.txt')
+        algo = ['group-pr']
+        for a in algo:
+            im = IM(g, {'Agent_0': 8130}, alg=a, diff_model='ic', inf_prob='uniform', r=1)
             seed = im.run()
             spread = im.result['spread']
             execution_time = im.result['execution_time']
@@ -83,9 +108,9 @@ class MyTestCase(unittest.TestCase):
         # Test network
         df = pd.DataFrame()
         g = read_dataset('../data/network.txt')
-        algo = ['group-pr']
+        algo = ['simpath','group-pr', 'celf']
         for a in algo:
-            im = IM(g, {'Agent_0': 40}, alg=a, diff_model='ic', inf_prob='uniform', r=1)
+            im = IM(g, {'Agent_0': 10}, alg=a, diff_model='ic', inf_prob='uniform', r=1000)
             seed = im.run()
             spread = im.result['spread']
             execution_time = im.result['execution_time']
