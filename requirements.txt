@@ -1,8 +1,7 @@
 networkx==3.2.1
-numpy~=2.1.0
+numpy
 tqdm~=4.66.5
 matplotlib~=3.9.2
 scipy
 heapdict~=1.0.1
 pandas~=2.2.2
-IPython~=8.0.1
