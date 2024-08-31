@@ -158,7 +158,7 @@ class Group_PR(ProxyBasedAlgorithm):
         # Compute influence-PageRank vector
         fPR = nx.pagerank(self.inverted_graph, alpha=self.d, weight='p')
         delta_dict = {s: (len(influencee) / (1 - self.d)) * fPR[s] for s in self.graph.nodes}
-        progress_bar = tqdm(range(self.budget), desc='Group_PR')
+        progress_bar = tqdm(range(self.budget), desc='Group_PR', position=1, leave=True)
         while len(seed_set) < self.budget:
             # Re-arrange the order of nodes to make delta_s > delta_{s+1}
             delta_dict = dict(sorted(delta_dict.items(), key=lambda item: item[1], reverse=True))
