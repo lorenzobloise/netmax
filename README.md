@@ -10,7 +10,6 @@ NetMax is a python library that provides the implementation of several algorithm
     [X] Create "algorithms" directory and:
         [X] Create "simulation_based.py" with the code inside "algorithms.py"
         [X] Create "proxy_based.py" with the code inside "heuristics.py"
-    [ ] Complete the multi-agent algorithm pseudocode
     [X] Implement Decreasing Cascade Diffusion Model
     [ ] Implement the proxy-based algorithms:
         [ ] IRIE
@@ -22,6 +21,12 @@ NetMax is a python library that provides the implementation of several algorithm
         [ ] PMIA
         [ ] IPA
         [ ] LDAG
+    [ ] Add partial seed set to algorithms
+    [ ] Write a simulation method for competitive IM
+    [ ] Define a score for each node computing:
+        - The marginal gain for the current agent
+        - The average marginal gain for the other agents
+        - The average of the two previous
 
 ## Ideas
     - Add a Configuration object to IM

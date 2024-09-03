@@ -20,6 +20,8 @@ class ProxyBasedAlgorithm:
         self.graph = graph
         self.agent = agent
         self.budget = budget
+        self.diff_model = diff_model
+        self.r = r
 
     def run(self):
         raise NotImplementedError("This method must be implemented by subclasses")
@@ -38,7 +40,7 @@ class HighestOutDegree(ProxyBasedAlgorithm):
         super().__init__(graph, agent, budget, diff_model, r)
 
     def run(self):
-        out_deg_ranking = sorted(self.graph.nodes, key=lambda node: self.graph.out_degree(node), reverse=True)
+        out_deg_ranking = sorted(im.inactive_nodes(self.graph), key=lambda node: self.graph.out_degree(node), reverse=True)
         seed_set = out_deg_ranking[:self.budget]
         return seed_set
 

@@ -110,7 +110,7 @@ class MyTestCase(unittest.TestCase):
         g = read_dataset('../data/network.txt')
         algo = ['simpath','group-pr', 'celf']
         for a in algo:
-            im = IM(g, {'Agent_0': 10}, alg=a, diff_model='ic', inf_prob='uniform', r=1000)
+            im = IM(g, {'Agent_0': 10}, alg=a, diff_model='lt', inf_prob='uniform', r=1000)
             seed = im.run()
             spread = im.result['spread']
             execution_time = im.result['execution_time']
@@ -123,6 +123,24 @@ class MyTestCase(unittest.TestCase):
             df = pd.concat([df, pd.DataFrame(result_row)], ignore_index=True)
         self.__calculate_similarities__(df)
 
+    def test_network_competitive(self):
+        df = pd.DataFrame()
+        g = read_dataset('../data/network.txt')
+        a = 'celf'
+        agents = {
+            'Agent_0': 5,
+            'Agent_1': 5
+        }
+        im = IM(g, agents, a, 'ic', 'uniform', r=10)
+        seed = im.run()
+        spread = im.result['spread']
+        execution_time = im.result['execution_time']
+        result_row = {
+            "time": [execution_time],
+            "seed": [seed],
+            "spread": [spread]
+        }
+        print(result_row)
 
 if __name__ == '__main__':
     unittest.main()
