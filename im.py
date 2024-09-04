@@ -84,15 +84,28 @@ def remove_isolated_nodes(graph):
     return mapping
 
 
+def remove_nodes_not_in_community(community, active_sets):
+    """
+    Remove nodes that are not in the community from the active sets.
+    :param community: The community of nodes.
+    :param active_sets: The active sets of the agents. {"agent_name": [active_nodes], ...}
+    """
+    for agent_name in active_sets.keys():
+        active_sets[agent_name] = [node for node in active_sets[agent_name] if node in community]
+    return active_sets
+
+
 def simulation(graph, diff_model, agents, r=10000, community=None):
-    spread = 0
+    spreads = dict()
     for _ in tqdm(range(r), desc="Simulations", position=0, leave=True):
-        active_set = diff_model.activate(graph, agents)
+        active_sets = diff_model.activate(graph, agents)
         if community is not None:
-            active_set = [node for node in active_set if node in community]
-        spread += len(active_set)
-    spread = spread / r
-    return spread
+            active_sets = remove_nodes_not_in_community(community, active_sets)
+        for agent_name in active_sets.keys():
+            spreads[agent_name] = spreads.get(agent_name, 0) + len(active_sets[agent_name])
+    for agent_name in spreads.keys():
+        spreads[agent_name] /= r
+    return spreads
 
 
 # TODO: change agent, seed with agents
@@ -109,18 +122,7 @@ def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=
     return spread
 
 
-"""
-Simulazione competitiva: dividerla in due fasi:
-1) I nodi attivati (in base al modello di diffusione) contattano i neighbour e provano ad attivarli
-2) I neighbour per i quali il tentativo di attivazione ha avuto successo scelgono a quale agente aderire in base ad un criterio (funzione)
-"""
-
-
-
-
-
 class IM:
-
     class Agent(object):
 
         def __init__(self, name, budget):
@@ -146,6 +148,10 @@ class IM:
         """
         self.input_graph = input_graph
         self.agents = [self.Agent(name, budget) for (name, budget) in agents.items()]
+        budget_sum = sum([a.budget for a in self.agents])
+        n_nodes = len(self.input_graph.nodes)
+        if budget_sum > n_nodes:
+            raise ValueError(f"The sum of the budgets ({budget_sum}) exceeds the number of nodes in the graph ({n_nodes}) by {budget_sum - n_nodes}")
         hierarchy = (utils.find_hierarchy(simulation_based.SimulationBasedAlgorithm) |
                      utils.find_hierarchy(proxy_based.ProxyBasedAlgorithm) |
                      utils.find_hierarchy(diffusion_models.DiffusionModel) |
@@ -155,6 +161,7 @@ class IM:
         for (k, v) in {'alg': alg, 'diff_model': diff_model, 'inf_prob': inf_prob}.items():
             if v not in list(hierarchy.keys()):
                 raise ValueError(f"Argument '{v}' not supported for field '{k}'")
+
         self.insert_prob = insert_prob
         self.inv_edges = inv_edges
         self.r = r
@@ -181,11 +188,15 @@ class IM:
     # TODO: adapt for multiple agents
     def run(self):
         start_time = time.time()
+        alg = self.alg(graph=self.graph, agent=None, budget=1, diff_model=self.diff_model, r=self.r)
         while not self.__game_over__():
             for curr_agent in self.__get_agents_not_fulfilled__():
-                partial_seed = self.alg(graph=self.graph, agent=curr_agent.name, budget=1, diff_model=self.diff_model, r=self.r).run() # TODO add partial seed set to algorithms
+                alg.set_agent(curr_agent.name)
+                alg.set_graph(self.graph)
+                partial_seed = alg.run()
                 if len(partial_seed) == 0:
-                    raise RuntimeError(f"No more available nodes to add to the seed set of agent {curr_agent.name}. Budget not fulfilled by {curr_agent.budget - len(curr_agent.seed)}")
+                    raise RuntimeError(
+                        f"No more available nodes to add to the seed set of agent {curr_agent.name}. Budget not fulfilled by {curr_agent.budget - len(curr_agent.seed)}")
                 for node in partial_seed:
                     activate_node(graph=self.graph, node=node, agent_name=curr_agent.name)
                 curr_agent.seed.extend(partial_seed)
@@ -201,7 +212,7 @@ class IM:
         }
         return self.result['seed']
 
-    def __budget_fulfilled__(self,agent):
+    def __budget_fulfilled__(self, agent):
         """
         Check if the budget of an agent is fulfilled.
 
