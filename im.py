@@ -5,10 +5,42 @@ import diffusion_models
 import influence_probabilities
 import time
 from tqdm import tqdm
+import endorsement_strategies
 
 
-def activate_node(graph, node, agent):
-    graph.nodes[node]['agent'] = agent
+def activate_node(graph, node, agent_name):
+    """
+    Activate a node in the graph by setting its status to 'ACTIVE' and the agent name that activated it.
+    :param graph: The input graph (networkx.DiGraph).
+    :param node: The node to activate.
+    :param agent_name: The agent that activates the node.
+    """
+    graph.nodes[node]['agent'] = agent_name
+    graph.nodes[node]['status'] = 'ACTIVE'
+    if 'contacted_by' in graph.nodes[node]:
+        del graph.nodes[node]['contacted_by']
+
+
+def contact_node(graph, node, agent_name):
+    """
+    Contact a node in the graph by setting its status to 'PENDING' and adding the agent name that contacted it.
+    :param graph: The input graph (networkx.DiGraph).
+    :param node: The node to contact.
+    :param agent_name: The agent that contacts the node.
+    """
+    graph.nodes[node]['status'] = 'PENDING'
+    if 'contacted_by' not in graph.nodes[node]:
+        graph.nodes[node]['contacted_by'] = set()
+    graph.nodes[node]['contacted_by'].add(agent_name)
+
+
+def manage_pending_nodes(graph, endorsement_strategy):
+    newly_activated = []
+    for node in pending_nodes(graph):
+        chosen_agent_name = endorsement_strategy.choose_agent(node, graph)
+        activate_node(graph, node, chosen_agent_name)
+        newly_activated.append(node)
+    return newly_activated
 
 
 def active_nodes(graph):
@@ -19,8 +51,16 @@ def inactive_nodes(graph):
     return [u for u in graph.nodes if not is_active(u, graph)]
 
 
+def pending_nodes(graph):
+    return [u for u in graph.nodes if is_pending(u, graph)]
+
+
 def is_active(node, graph):
-    return graph.nodes[node]['agent'] != 'NONE'
+    return graph.nodes[node]['status'] == 'ACTIVE'
+
+
+def is_pending(node, graph):
+    return graph.nodes[node]['status'] == 'PENDING'
 
 
 def invert_edges(graph):
@@ -44,10 +84,10 @@ def remove_isolated_nodes(graph):
     return mapping
 
 
-def simulation(graph, diff_model, agent, seed, r=10000, community=None):
+def simulation(graph, diff_model, agents, r=10000, community=None):
     spread = 0
     for _ in tqdm(range(r), desc="Simulations", position=0, leave=True):
-        active_set = diff_model.activate(graph, agent, seed)
+        active_set = diff_model.activate(graph, agents)
         if community is not None:
             active_set = [node for node in active_set if node in community]
         spread += len(active_set)
@@ -55,6 +95,7 @@ def simulation(graph, diff_model, agent, seed, r=10000, community=None):
     return spread
 
 
+# TODO: change agent, seed with agents
 def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=None):
     spread = 0
     for _ in range(r):
@@ -75,7 +116,11 @@ Simulazione competitiva: dividerla in due fasi:
 """
 
 
+
+
+
 class IM:
+
     class Agent(object):
 
         def __init__(self, name, budget):
@@ -85,7 +130,8 @@ class IM:
             self.spread = 0
 
     def __init__(self, input_graph: nx.DiGraph, agents: dict, alg: str = 'celf', diff_model: str = 'ic',
-                 inf_prob: str = 'uniform', insert_prob: bool = False, inv_edges: bool = False, r: int = 100):
+                 inf_prob: str = 'uniform', endorsement_strategy: str = 'random',
+                 insert_prob: bool = False, inv_edges: bool = False, r: int = 100):
         """
         Create an instance of the Influence Maximization problem.
         :param input_graph: The input directed graph (networkx.DiGraph).
@@ -93,6 +139,7 @@ class IM:
         :key alg: Algorithm that solves the maximization problem. The framework implements different algorithms, default is 'celf'.
         :key diff_model: Diffusion model that models the influence spreading among the nodes. The framework implements different diffusion models, default is 'ic'.
         :key inf_prob: Probability distribution to generate (if needed) the probabilities of influence between nodes. The framework implements different probability distributions, default is 'uniform'.
+        #:key endorsement_strategy: Strategy that nodes use to endorse a certain agent (only used in a competitive context). The framework implements different endorsement strategies, default is 'random'.
         :key insert_prob: If True, labels the edges with the influence probability.
         :key inv_edges: If True, inverts the graph edges (edge (u,v) becomes (v,u)).
         :key r: Number of simulations to execute. Default is 10000.
@@ -102,7 +149,9 @@ class IM:
         hierarchy = (utils.find_hierarchy(simulation_based.SimulationBasedAlgorithm) |
                      utils.find_hierarchy(proxy_based.ProxyBasedAlgorithm) |
                      utils.find_hierarchy(diffusion_models.DiffusionModel) |
-                     utils.find_hierarchy(influence_probabilities.InfluenceProbability))
+                     utils.find_hierarchy(influence_probabilities.InfluenceProbability) |
+                     utils.find_hierarchy(endorsement_strategies.EndorsementStrategy)
+                     )
         for (k, v) in {'alg': alg, 'diff_model': diff_model, 'inf_prob': inf_prob}.items():
             if v not in list(hierarchy.keys()):
                 raise ValueError(f"Argument '{v}' not supported for field '{k}'")
@@ -113,7 +162,7 @@ class IM:
         self.mapping = None
         self.__preprocess__()
         self.inf_prob = hierarchy[inf_prob]()
-        self.diff_model = hierarchy[diff_model]()
+        self.diff_model = hierarchy[diff_model](hierarchy[endorsement_strategy])
         self.diff_model.preprocess_data(self.graph)
         self.alg = hierarchy[alg]  # It will be instantiated at execution time
         self.result = None
@@ -127,6 +176,7 @@ class IM:
                 self.graph.edges[source, target]['p'] = self.inf_prob.get_probability(self.graph, source, target)
         for node in self.graph.nodes:
             self.graph.nodes[node]['agent'] = 'NONE'
+            self.graph.nodes[node]['status'] = 'INACTIVE'
 
     # TODO: adapt for multiple agents
     def run(self):
@@ -137,13 +187,13 @@ class IM:
                 if len(partial_seed) == 0:
                     raise RuntimeError(f"No more available nodes to add to the seed set of agent {curr_agent.name}. Budget not fulfilled by {curr_agent.budget - len(curr_agent.seed)}")
                 for node in partial_seed:
-                    activate_node(graph=self.graph, node=node, agent=curr_agent)
+                    activate_node(graph=self.graph, node=node, agent_name=curr_agent.name)
                 curr_agent.seed.extend(partial_seed)
         execution_time = time.time() - start_time
         inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
         for a in self.agents:
             a.seed = [inverse_mapping[s] for s in a.seed]
-            a.spread = simulation(graph=self.graph, diff_model=self.diff_model, agent=a.name, seed=a.seed, r=self.r)
+            #a.spread = simulation(graph=self.graph, diff_model=self.diff_model, agent_name=a.name, seed=a.seed, r=self.r) # TODO: change
         self.result = {
             'seed': {a: a.seed for a in self.agents},
             'spread': {a: a.spread for a in self.agents},
@@ -154,13 +204,14 @@ class IM:
     def __budget_fulfilled__(self,agent):
         """
         Check if the budget of an agent is fulfilled.
+
         """
         return len(agent.seed) >= agent.budget
 
     def __get_agents_not_fulfilled__(self):
         """
         Get the agents that have not fulfilled their budget yet.
-        :return: List of agents that have not fulfilled their budget yet
+        :return: List of objects of type Agent that have not fulfilled their budget yet
         """
         return [a for a in self.agents if not self.__budget_fulfilled__(a)]
 

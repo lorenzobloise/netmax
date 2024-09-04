@@ -1,13 +1,31 @@
 import random
 import im
 
+
+
 class DiffusionModel:
+
+    def __init__(self, endorsement_strategy):
+        self.endorsement_strategy = endorsement_strategy
 
     def preprocess_data(self, graph):
         raise NotImplementedError("This method must be implemented by subclasses")
 
     def activate(self, graph, agent, seed):
         raise NotImplementedError("This method must be implemented by subclasses")
+
+    def competitive_activate(self, graph, agents):
+        raise NotImplementedError("This method must be implemented by subclasses")
+
+    def __group_by_agent__(self, graph, active_set):
+        dict_result = {}
+        for u in active_set:
+            curr_agent = graph.nodes[u]['agent']
+            if curr_agent in dict_result:
+                dict_result[curr_agent].append(u)
+            else:
+                dict_result[curr_agent] = [u]
+        return dict_result
 
 
 class IndependentCascade(DiffusionModel):
@@ -17,13 +35,16 @@ class IndependentCascade(DiffusionModel):
 
     name = 'ic'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, endorsement_strategy):
+        super().__init__(endorsement_strategy)
 
     def preprocess_data(self, graph):
         return
 
     def activate(self, graph, agent, seed):
+        """
+        #TODO maybe broken, should be removed because the new return value will be a dictionary as in competitive_activate
+        """
         sim_graph = graph.copy()
         for u in seed:
             im.activate_node(sim_graph, u, agent)
@@ -45,6 +66,35 @@ class IndependentCascade(DiffusionModel):
             newly_activated = tmp
         return active_set
 
+    def competitive_activate(self, graph, agents):
+        """
+        :return: A dictionary with the agents as keys and the list of nodes activated by each agent as values
+        """
+        sim_graph = graph.copy()
+        for agent in agents:
+            for u in agent.seed:
+                im.activate_node(sim_graph, u, agent.name)
+        active_set = im.active_nodes(sim_graph)
+        newly_activated = list(active_set)
+        old_active_set = []
+        while active_set != old_active_set:
+            old_active_set = active_set.copy()
+            # First phase: try to influence inactive nodes
+            # Each newly activated node tries to activate its inactive neighbors by contacting them
+            for u in newly_activated:
+                inactive_out_edges = [(u, v, attr) for (u, v, attr) in sim_graph.out_edges(u, data=True) if
+                                      not im.is_active(v, sim_graph)]
+                for (_, v, attr) in inactive_out_edges:
+                    r = random.random()
+                    if r < attr['p']:
+                        im.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
+            # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
+            newly_activated = im.manage_pending_nodes(sim_graph, self.endorsement_strategy)
+            active_set.extend(newly_activated)
+
+        # Group the activated nodes by agent and return the result
+        return self.__group_by_agent__(sim_graph, active_set)
+
 
 class LinearThreshold(DiffusionModel):
     """
@@ -53,8 +103,8 @@ class LinearThreshold(DiffusionModel):
 
     name = 'lt'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, endorsement_strategy):
+        super().__init__(endorsement_strategy)
 
     def preprocess_data(self, graph):
         for node in graph.nodes:
@@ -90,8 +140,8 @@ class Triggering(DiffusionModel):
 
     name = 'tr'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, endorsement_strategy):
+        super().__init__(endorsement_strategy)
 
     def preprocess_data(self, graph):
         for node in graph.nodes:
@@ -132,8 +182,8 @@ class DecreasingCascade(DiffusionModel):
 
     name = 'dc'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, endorsement_strategy):
+        super().__init__(endorsement_strategy)
 
     def preprocess_data(self, graph):
         for node in graph.nodes:
