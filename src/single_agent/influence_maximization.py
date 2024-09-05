@@ -1,8 +1,10 @@
 import networkx as nx
 from src.common import utils
-from algorithms import simulation_based, proxy_based
-import diffusion_models
-from src.common import influence_probabilities
+from src.single_agent.algorithms.algorithm import Algorithm
+from src.single_agent.algorithms.simulation_based.simulation_based import SimulationBasedAlgorithm
+from src.single_agent.algorithms.proxy_based.proxy_based import ProxyBasedAlgorithm
+from src.single_agent.diffusion_models.diffusion_model import DiffusionModel
+from src.common.influence_probabilities.influence_probability import InfluenceProbability
 import time
 from tqdm import tqdm
 
@@ -56,6 +58,7 @@ def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=
 
 class InfluenceMaximization:
 
+    # TODO: fix hierarchy method in utils
     def __init__(self, input_graph: nx.DiGraph, agent: str, budget: int, alg: str = 'celf', diff_model: str = 'ic',
                  inf_prob: str = 'uniform', insert_prob: bool = False, inv_edges: bool = False, r: int = 100):
         """
@@ -76,12 +79,11 @@ class InfluenceMaximization:
         n_nodes = len(self.graph.nodes)
         if self.budget > n_nodes:
             raise ValueError(f"The budget ({self.budget}) exceeds the number of nodes in the graph ({n_nodes}) by {self.budget - n_nodes}")
-        hierarchy = (utils.find_hierarchy(simulation_based.SimulationBasedAlgorithm) |
-                     utils.find_hierarchy(proxy_based.ProxyBasedAlgorithm) |
-                     utils.find_hierarchy(diffusion_models.DiffusionModel) |
-                     utils.find_hierarchy(influence_probabilities.InfluenceProbability))
+        hierarchy: dict = dict(utils.find_hierarchy(Algorithm) +
+                               utils.find_hierarchy(DiffusionModel) +
+                               utils.find_hierarchy(InfluenceProbability))
         for (k, v) in {'alg': alg, 'diff_model': diff_model, 'inf_prob': inf_prob}.items():
-            if v not in list(hierarchy.keys()):
+            if v not in hierarchy.keys():
                 raise ValueError(f"Argument '{v}' not supported for field '{k}'")
         self.insert_prob = insert_prob
         self.inv_edges = inv_edges
