@@ -1,8 +1,8 @@
 import random
-import im
+import influence_maximization
 import networkx as nx
 
-class EndorsementStrategy:
+class EndorsementPolicy:
 
     def __init__(self, graph):
         return
@@ -11,7 +11,7 @@ class EndorsementStrategy:
         raise NotImplementedError("This method must be implemented by subclasses")
 
 
-class Random(EndorsementStrategy):
+class Random(EndorsementPolicy):
 
     name = "random"
 
@@ -23,7 +23,7 @@ class Random(EndorsementStrategy):
         return random.choice(graph.nodes[node]['contacted_by'])
 
 
-class Voting(EndorsementStrategy):
+class Voting(EndorsementPolicy):
 
     name = "voting"
 
@@ -42,7 +42,7 @@ class Voting(EndorsementStrategy):
         return max(voting, key=voting.get)
 
 
-class Similarity(EndorsementStrategy):
+class Similarity(EndorsementPolicy):
 
     name = "similarity"
 
@@ -62,7 +62,7 @@ class Similarity(EndorsementStrategy):
         return max(scores, key=scores.get)
 
 
-class Community(EndorsementStrategy):
+class Community(EndorsementPolicy):
 
     name = "community"
 

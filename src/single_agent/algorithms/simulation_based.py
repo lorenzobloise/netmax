@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from heapdict import heapdict
 import networkx as nx
-import im
+import influence_maximization as im
 import math
 
 class SimulationBasedAlgorithm:
@@ -168,7 +168,7 @@ class UBLF(SimulationBasedAlgorithm):
     def __init__(self, graph, agent, budget, diff_model, r):
         super().__init__(graph, agent, budget, diff_model, r)
 
-    def get_propagation_probability_matrix(self, graph):
+    def __get_propagation_probability_matrix__(self, graph):
         """
         :param graph:
         :return: PP: propagation probability matrix
@@ -179,8 +179,8 @@ class UBLF(SimulationBasedAlgorithm):
             PP[u][v] = data['p']
         return PP
 
-    def get_delta_appr(self, graph):
-        PP = self.get_propagation_probability_matrix(graph)
+    def __get_delta_appr__(self, graph):
+        PP = self.__get_propagation_probability_matrix__(graph)
         one_vector = np.ones((graph.number_of_nodes(), 1))
         a_t = [np.dot(PP, one_vector)]
         progress_bar = tqdm()
@@ -192,12 +192,12 @@ class UBLF(SimulationBasedAlgorithm):
         return np.sum(a_t, axis=0)
 
     def get_delta_exact(self, graph):
-        PP = self.get_propagation_probability_matrix(graph)
+        PP = self.__get_propagation_probability_matrix__(graph)
         E = np.eye(PP.shape[0], PP.shape[1])
         delta = np.dot(np.linalg.inv(E - PP), np.ones((graph.number_of_nodes(), 1)))
         return delta
 
-    def get_max_nodes_delta_except_seed(self, delta, seed_set):
+    def __get_max_nodes_delta_except_seed__(self, delta, seed_set):
         mask = np.ones(delta.shape, dtype=bool)
         mask[seed_set] = False
         delta_exclude = np.where(mask,delta,-np.inf)
@@ -214,11 +214,11 @@ class UBLF(SimulationBasedAlgorithm):
                 dict_I[u] = 0
             while True:
                 # Take the node with the maximum value of delta not in the seed set
-                u = self.get_max_nodes_delta_except_seed(delta, seed_set)
+                u = self.__get_max_nodes_delta_except_seed__(delta, seed_set)
                 if dict_I[u] == 0:
                     delta[u] = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set+[u], seed_set, self.r)
                     dict_I[u] = 1
-                if delta[u] >= delta[self.get_max_nodes_delta_except_seed(delta, seed_set+[u])]:
+                if delta[u] >= delta[self.__get_max_nodes_delta_except_seed__(delta, seed_set+[u])]:
                     seed_set.append(u)
                     im.activate_node(sim_graph, u, self.agent)
                     break
