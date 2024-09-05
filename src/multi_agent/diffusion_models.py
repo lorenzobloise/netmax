@@ -1,6 +1,5 @@
+import competitive_influence_maximization as cim
 import random
-import im
-import endorsement_strategies
 
 class DiffusionModel:
 
@@ -44,21 +43,21 @@ class IndependentCascade(DiffusionModel):
         sim_graph = graph.copy()
         for agent in agents:
             for u in agent.seed:
-                im.activate_node(sim_graph, u, agent.name)
-        active_set = im.active_nodes(sim_graph)
+                cim.activate_node(sim_graph, u, agent.name)
+        active_set = cim.active_nodes(sim_graph)
         newly_activated = list(active_set)
         while len(newly_activated) > 0:
             # First phase: try to influence inactive nodes
             # Each newly activated node tries to activate its inactive neighbors by contacting them
             for u in newly_activated:
                 inactive_out_edges = [(u, v, attr) for (u, v, attr) in sim_graph.out_edges(u, data=True) if
-                                      not im.is_active(v, sim_graph)]
+                                      not cim.is_active(v, sim_graph)]
                 for (_, v, attr) in inactive_out_edges:
                     r = random.random()
                     if r < attr['p']:
-                        im.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
+                        cim.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
-            newly_activated = im.manage_pending_nodes(sim_graph, self.endorsement_strategy)
+            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_strategy)
             active_set.extend(newly_activated)
         # Group the activated nodes by agent and return the result
         return self.__group_by_agent__(sim_graph, active_set)
@@ -94,20 +93,20 @@ class LinearThreshold(DiffusionModel):
         sim_graph = graph.copy()
         for agent in agents:
             for u in agent.seed:
-                im.activate_node(sim_graph, u, agent.name)
+                cim.activate_node(sim_graph, u, agent.name)
                 self.__update_prob_sum__(sim_graph, u, agent.name)
-        active_set = im.active_nodes(sim_graph)
+        active_set = cim.active_nodes(sim_graph)
         newly_activated = list(active_set)
         while len(newly_activated) > 0:
-            inactive_set = im.inactive_nodes(sim_graph)
+            inactive_set = cim.inactive_nodes(sim_graph)
             # First phase: try to influence inactive nodes
             # Each newly activated node tries to activate its inactive neighbors by contacting them
             for u in inactive_set:
                 curr_agent_name = sim_graph.nodes[u]['agent']
                 if sim_graph.nodes[u]['prob_sum'][curr_agent_name] >= sim_graph.nodes[u]['threshold']:
-                    im.contact_node(sim_graph, u, curr_agent_name)
+                    cim.contact_node(sim_graph, u, curr_agent_name)
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
-            newly_activated = im.manage_pending_nodes(sim_graph, self.endorsement_strategy)
+            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_strategy)
             active_set.extend(newly_activated)
             # Update the probability sum of the neighbour of newly activated nodes
             for u in newly_activated:
@@ -145,18 +144,18 @@ class Triggering(DiffusionModel):
         sim_graph = graph.copy()
         for agent in agents:
             for u in agent.seed:
-                im.activate_node(sim_graph, u, agent.name)
-        active_set = im.active_nodes(sim_graph)
+                cim.activate_node(sim_graph, u, agent.name)
+        active_set = cim.active_nodes(sim_graph)
         newly_activated = list(active_set)
         while len(newly_activated) > 0:
             # First phase: try to influence inactive nodes
             # Each newly activated node tries to activate its inactive neighbors by contacting them
             for u in newly_activated:
                 for v in sim_graph.nodes[u]['reverse_trigger_set']:
-                    if not im.is_active(v, sim_graph):
-                        im.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
+                    if not cim.is_active(v, sim_graph):
+                        cim.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
-            newly_activated = im.manage_pending_nodes(sim_graph, self.endorsement_strategy)
+            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_strategy)
             active_set.extend(newly_activated)
         # Group the activated nodes by agent and return the result
         return self.__group_by_agent__(sim_graph, active_set)
@@ -183,25 +182,25 @@ class DecreasingCascade(DiffusionModel):
         sim_graph = graph.copy()
         for agent in agents:
             for u in agent.seed:
-                im.activate_node(sim_graph, u, agent.name)
+                cim.activate_node(sim_graph, u, agent.name)
                 del sim_graph.nodes[u]['trials'] # Remove the trials attribute of the node to avoid memory waste
-        active_set = im.active_nodes(sim_graph)
+        active_set = cim.active_nodes(sim_graph)
         newly_activated = list(active_set)
         while len(newly_activated) > 0:
             # First phase: try to influence inactive nodes
             # Each newly activated node tries to activate its inactive neighbors by contacting them
             for u in newly_activated:
                 inactive_out_edges = [(u, v, attr) for (u, v, attr) in sim_graph.out_edges(u, data=True) if
-                                      not im.is_active(v, sim_graph)]
+                                      not cim.is_active(v, sim_graph)]
                 for (_, v, attr) in inactive_out_edges:
                     r = random.random()
                     trials = sim_graph.nodes[u]['trials']
                     if r < attr['p'] * (1 / (0.1 * (trials ** 2) + 1)):
-                        im.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
+                        cim.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
                     else:
                         sim_graph.nodes[u]['trials'] = trials + 1
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
-            newly_activated = im.manage_pending_nodes(sim_graph, self.endorsement_strategy)
+            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_strategy)
             for u in newly_activated: del sim_graph.nodes[u]['trials'] # Remove the trials attribute of the node to avoid memory waste
             active_set.extend(newly_activated)
         # Group the activated nodes by agent and return the result

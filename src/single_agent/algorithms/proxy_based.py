@@ -2,8 +2,7 @@ import networkx as nx
 from heapdict import heapdict
 import numpy as np
 from tqdm import tqdm
-import im
-import diffusion_models
+import influence_maximization as im
 
 """
 Influence ranking proxy algorithms
@@ -81,7 +80,7 @@ class DegDis(ProxyBasedAlgorithm):
             u, _ = dd.popitem()
             seed_set.append(u)
             for v in self.graph[u]:
-                if not im.is_active(self.graph, v): # If the node is not part of any seed set
+                if v not in seed_set: # If the node is not part of the seed set
                     # Get label p of edge u v
                     if v not in p:  # If v hasn't been reached yet
                         p[v] = self.graph.edges[u, v]['p']
@@ -96,15 +95,15 @@ class DegDis(ProxyBasedAlgorithm):
 class UBound(ProxyBasedAlgorithm):
     """
     Paper: Zhou et al. - "UBLF: An Upper Bound Based Approach to Discover Influential Nodes in Social Networks"
+    The UBound algorithm doesn't work if the graph has cycles.
     """
 
     name = 'ubound'
 
     def __init__(self, graph, agent, budget, diff_model, r):
         super().__init__(graph, agent, budget, diff_model, r)
-        self.delta_dict = None
 
-    def get_propagation_probability_matrix(self, graph):
+    def __get_propagation_probability_matrix(self, graph):
         """
         :param graph:
         :return: PP: propagation probability matrix
@@ -115,8 +114,8 @@ class UBound(ProxyBasedAlgorithm):
             PP[u][v] = data['p']
         return PP
 
-    def get_delta_appr(self, graph):
-        PP = self.get_propagation_probability_matrix(graph)
+    def __get_delta_appr__(self, graph):
+        PP = self.__get_propagation_probability_matrix(graph)
         one_vector = np.ones((graph.number_of_nodes(), 1))
         a_t = [np.dot(PP, one_vector)]
         progress_bar = tqdm()
@@ -128,20 +127,17 @@ class UBound(ProxyBasedAlgorithm):
         progress_bar.close()
         return np.sum(a_t, axis=0)
 
-    def get_delta_exact(self, graph):
-        PP = self.get_propagation_probability_matrix(graph)
+    def __get_delta_exact__(self, graph):
+        PP = self.__get_propagation_probability_matrix(graph)
         E = np.eye(PP.shape[0], PP.shape[1])
         delta_vector = np.dot(np.linalg.inv(E - PP), np.ones((graph.number_of_nodes(), 1)))
         return delta_vector
 
     def run(self):
-        if self.delta_dict is None:
-            delta = self.get_delta_exact(self.graph)  # Vector N x 1
-            delta_dict = {i: delta[i] for i in range(len(delta))}
-            self.delta_dict = dict(sorted(delta_dict.items(), key=lambda item: item[1], reverse=True))
-        seed_set = list(self.delta_dict.keys())[:self.budget]
-        for u in seed_set:
-            self.delta_dict.pop(u)
+        delta = self.__get_delta_exact__(self.graph)  # Vector N x 1
+        delta_dict = {i: delta[i] for i in range(len(delta))}
+        delta_dict = dict(sorted(delta_dict.items(), key=lambda item: item[1], reverse=True))
+        seed_set = list(delta_dict.keys())[:self.budget]
         return seed_set
 
 
@@ -155,9 +151,9 @@ class Group_PR(ProxyBasedAlgorithm):
     def __init__(self, graph, agent, budget, diff_model, r):
         super().__init__(graph, agent, budget, diff_model, r)
         self.d = 0.85
-        self.inverted_graph = im.invert_edges(self.graph)
+        self.inverted_graph = self.graph.reverse(copy=True)
 
-    def get_delta_bound(self, seed_set, influencee, s):
+    def __get_delta_bound__(self, seed_set, influencee, s):
         if len(influencee) == 0:
             fPR = nx.pagerank(self.inverted_graph, alpha=self.d, weight='p')
         else:
@@ -172,20 +168,19 @@ class Group_PR(ProxyBasedAlgorithm):
 
     def run(self):
         seed_set = []
-        influencee = im.inactive_nodes(self.graph)
+        influencee = list(self.graph.nodes)
         # Compute influence-PageRank vector
-        personalization = {u: 1 / len(influencee) for u in influencee}
-        fPR = nx.pagerank(self.inverted_graph, alpha=self.d, personalization=personalization, weight='p')
+        fPR = nx.pagerank(self.inverted_graph, alpha=self.d, weight='p')
         delta_dict = {s: (len(influencee) / (1 - self.d)) * fPR[s] for s in self.graph.nodes}
         progress_bar = tqdm(range(self.budget), desc='Group_PR', position=1, leave=True)
         while len(seed_set) < self.budget:
             # Re-arrange the order of nodes to make delta_s > delta_{s+1}
             delta_dict = dict(sorted(delta_dict.items(), key=lambda item: item[1], reverse=True))
             delta_max, s_max = 0, -1
-            for s in im.inactive_nodes(self.graph):
+            for s in [_ for _ in self.graph.nodes if _ not in seed_set]:
                 if delta_dict[s] > delta_max:
                     # Compute the real increment delta_s by Linear or by Bound
-                    delta_dict[s] = self.get_delta_bound(seed_set, influencee, s)
+                    delta_dict[s] = self.__get_delta_bound__(seed_set, influencee, s)
                     if delta_dict[s] > delta_max:
                         delta_max, s_max = delta_dict[s], s
             seed_set.append(s_max)
@@ -214,7 +209,7 @@ class SimPath(ProxyBasedAlgorithm):
             self.node = node
             self.spd = 0
             self.spd_induced = 0
-            self.flag=flag
+            self.flag = flag
 
     def __init__(self, graph, agent, budget, diff_model, r):
         super().__init__(graph, agent, budget, diff_model, r)
@@ -222,22 +217,21 @@ class SimPath(ProxyBasedAlgorithm):
             raise ValueError(f"SimPath can only be executed under Linear Threshold diffusion model (set the argument at 'lt')")
         self.lookahead = 5
         self.eta = 0.001
-        self.queue = None
 
-    def simpath_spread(self, seed, U):
+    def __simpath_spread__(self, seed, U):
         spd, spd_induced = 0, 0
         for u in seed:
             if self.graph.out_degree(u) > 0:
-                spd_new, spd_induced_new = self.backtrack(u, (set(self.graph.nodes) - set(seed)).union({u}), U)
+                spd_new, spd_induced_new = self.__backtrack__(u, (set(self.graph.nodes) - set(seed)).union({u}), U)
                 spd += spd_new
                 spd_induced += spd_induced_new
         return spd, spd_induced
 
-    def backtrack(self, u, W, U):
+    def __backtrack__(self, u, W, U):
         Q = [u]
         spd, spd_induced, pp, D = 1, 1, 1, {}
         while len(Q) > 0:
-            Q, D, spd, spd_induced, pp = self.forward(Q, D, spd, spd_induced, pp, W, U)
+            Q, D, spd, spd_induced, pp = self.__forward__(Q, D, spd, spd_induced, pp, W, U)
             u = Q.pop()
             del D[u]
             if len(Q) == 0:
@@ -246,22 +240,22 @@ class SimPath(ProxyBasedAlgorithm):
             pp = pp / self.graph.edges[v, u]['p']
         return spd, spd_induced
 
-    def exists_y(self, x, Q, D, W):
+    def __exists_y__(self, x, Q, D, W):
         """
         As specified in the paper, this function returns a node y that is in the out-neighborhood of x
         and not in Q and not in D[x] but it is in W
         """
-        out_neighbors = {v for (x, v) in self.graph.out_edges(x) if not im.is_active(v, self.graph)}
+        out_neighbors = {v for (x, v) in self.graph.out_edges(x)}
         for y in out_neighbors:
             if y not in Q and y not in D[x] and y in W:
                 return True, y
         return False, None
 
-    def forward(self, Q, D, spd, spd_induced, pp, W, U):
+    def __forward__(self, Q, D, spd, spd_induced, pp, W, U):
         x = Q[-1]
         if x not in list(D.keys()):
             D[x] = []
-        exists_y, y = self.exists_y(x, Q, D, W)
+        exists_y, y = self.__exists_y__(x, Q, D, W)
         while exists_y:
             if pp * self.graph.edges[x, y]['p'] < self.eta:
                 if x not in list(D.keys()):
@@ -280,7 +274,7 @@ class SimPath(ProxyBasedAlgorithm):
                 for v in U:
                     if v not in Q:
                         spd_induced += pp
-            exists_y, y = self.exists_y(x, Q, D, W)
+            exists_y, y = self.__exists_y__(x, Q, D, W)
         return Q, D, spd, spd_induced, pp
 
     def __get_node_from_queue__(self, queue, node):
@@ -293,41 +287,40 @@ class SimPath(ProxyBasedAlgorithm):
         import networkx.algorithms.approximation.vertex_cover as vc
         # Compute the vertex cover of input graph
         C = vc.min_weighted_vertex_cover(self.graph.to_undirected(as_view=True))
-        if self.queue is None:
-            self.queue = heapdict()  # Priority queue based on the spread value
-            for u in C:
-                in_neighbor = {v for (v, u) in self.graph.in_edges(u)}
-                U = set((set(self.graph.nodes) - C).intersection(in_neighbor))
-                spd, spd_induced = self.simpath_spread([u], U)
-                node_data = self.Node(u, spd, spd_induced)
-                # Add node to the queue
-                self.queue[node_data] = -node_data.spd
-            for v in set(self.graph.nodes) - C:
-                # Compute the spread value of v as specified by Theorem 2
-                spread_v = 1 + sum([self.graph.edges[v,u]['p'] * self.__get_node_from_queue__(self.queue, u).spd_induced for (v, u) in self.graph.out_edges(v)]) + self.agent.spread
-                self.queue[self.Node(v, spread_v)] = -spread_v
+        queue = heapdict()  # Priority queue based on the spread value
+        for u in C:
+            in_neighbor = {v for (v, u) in self.graph.in_edges(u)}
+            U = set((set(self.graph.nodes) - C).intersection(in_neighbor))
+            spd, spd_induced = self.__simpath_spread__([u], U)
+            node_data = self.Node(u, spd, spd_induced)
+            # Add node to the queue
+            queue[node_data] = -node_data.spd
+        for v in set(self.graph.nodes) - C:
+            # Compute the spread value of v as specified by Theorem 2
+            spread_v = 1 + sum([self.graph.edges[v,u]['p'] * self.__get_node_from_queue__(queue, u).spd_induced for (v, u) in self.graph.out_edges(v)])
+            queue[self.Node(v, spread_v)] = -spread_v
         seed_set = []
         spread = 0
         while len(seed_set) < self.budget:
             U = []
-            if len(self.queue) < self.lookahead:
-                self.lookahead = len(self.queue)
+            if len(queue) < self.lookahead:
+                self.lookahead = len(queue)
             for _ in range(self.lookahead):
-                curr_node_data, _ = self.queue.popitem()
+                curr_node_data, _ = queue.popitem()
                 U.append(curr_node_data.node)
-                self.queue[curr_node_data] = -curr_node_data.spd
-            _, spd_induced_seed = self.simpath_spread(seed_set, U)
+                queue[curr_node_data] = -curr_node_data.spd
+            _, spd_induced_seed = self.__simpath_spread__(seed_set, U)
             for x in U:
-                node_data_x = self.__get_node_from_queue__(self.queue, x)
+                node_data_x = self.__get_node_from_queue__(queue, x)
                 if node_data_x.flag:
                     seed_set.append(x)
                     spread += node_data_x.spd
-                    del self.queue[node_data_x]
+                    del queue[node_data_x]
                     break
-                _, spd_induced_seed_x = self.backtrack(x, set(self.graph.nodes)-set(seed_set), [])
+                _, spd_induced_seed_x = self.__backtrack__(x, set(self.graph.nodes)-set(seed_set), [])
                 spread_seed_x = spd_induced_seed_x + spd_induced_seed
                 marginal_gain_x = spread_seed_x - spread
                 node_data_x.flag = True
                 node_data_x.spd = marginal_gain_x
-                self.queue[node_data_x] = -node_data_x.spd
+                queue[node_data_x] = -node_data_x.spd
         return seed_set
