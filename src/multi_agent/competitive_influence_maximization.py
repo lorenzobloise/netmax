@@ -1,11 +1,10 @@
 import networkx as nx
 from src.common import utils
 from agent import Agent
-import endorsement_policies
-#from algorithms import simulation_based
-#from algorithms import proxy_based
-import diffusion_models
-from src.common import influence_probabilities
+from src.multi_agent.algorithms.algorithm import Algorithm
+from src.multi_agent.endorsement_policies.endorsement_policy import EndorsementPolicy
+from src.multi_agent.diffusion_models.diffusion_model import DiffusionModel
+from src.common.influence_probabilities.influence_probability import InfluenceProbability
 from tqdm import tqdm
 import time
 
@@ -102,7 +101,7 @@ class CompetitiveInfluenceMaximization:
 
     def __init__(self, input_graph: nx.DiGraph, agents: list[Agent],
                  alg: str, diff_model, inf_prob: str = 'uniform',
-                 endorsement_policy: endorsement_policies.EndorsementPolicy = endorsement_policies.Random,
+                 endorsement_policy: str = 'random',
                  insert_prob: bool = False, inv_edges: bool = False, r: int = 100):
         """
         Create an instance of the CompetitiveInfluenceMaximization class.
@@ -111,7 +110,7 @@ class CompetitiveInfluenceMaximization:
         :param alg: The algorithm to use for influence maximization.
         :param diff_model: The diffusion model to use.
         :param inf_prob: Probability distribution to generate (if needed) the probabilities of influence between nodes. The framework implements different probability distributions, default is 'uniform'.
-        :param endorsement_policy: The policy that nodes use to choose which agent to endorse when they have been contacted by more than one agent.
+        :param endorsement_policy: The policy that nodes use to choose which agent to endorse when they have been contacted by more than one agent. The framework implements different endorsement policies, default is 'random'.
         :param insert_prob: A boolean indicating whether to insert probabilities.
         :param inv_edges: A boolean indicating whether to invert the edges of the graph.
         :param r: Number of simulations to execute. Default is 100.
@@ -124,7 +123,6 @@ class CompetitiveInfluenceMaximization:
         if sum([agent.budget for agent in agents]) > len(self.graph.nodes):
             raise ValueError(
                 f"The budget ({budget}) exceeds the number of nodes in the graph ({n_nodes}) by {budget - n_nodes}")
-
         # Check and set the diffusion model, the algorithm and the influence probabilities
         diff_model_class, alg_class, inf_prob_class, endorsement_policy_class = self.__check_params__(diff_model, alg, inf_prob, endorsement_policy)
         self.inf_prob = inf_prob_class()
@@ -145,11 +143,10 @@ class CompetitiveInfluenceMaximization:
         :return: The classes of the diffusion model, the algorithm and the influence probabilities.
         :rtype: tuple (diffusion_models.DiffusionModel, algorithm.Algorithm, influence_probabilities.InfluenceProbability, endorsement_policies.EndorsementPolicy)
         """
-        hierarchy = (#utils.find_hierarchy(simulation_based.SimulationBasedAlgorithm) |
-                     #utils.find_hierarchy(proxy_based.ProxyBasedAlgorithm) |
-                     utils.find_hierarchy(diffusion_models.DiffusionModel) |
-                     utils.find_hierarchy(influence_probabilities.InfluenceProbability) |
-                     utils.find_hierarchy(endorsement_policies.EndorsementPolicy))
+        hierarchy: dict = dict(utils.find_hierarchy(Algorithm) +
+                               utils.find_hierarchy(DiffusionModel) +
+                               utils.find_hierarchy(InfluenceProbability) +
+                               utils.find_hierarchy(EndorsementPolicy))
         for (k, v) in {'alg': alg_name, 'diff_model': diff_model_name, 'inf_prob': inf_prob_name, 'endorsement_policy': endorsement_policy_name}.items():
             if v not in list(hierarchy.keys()):
                 raise ValueError(f"Argument '{v}' not supported for field '{k}'")

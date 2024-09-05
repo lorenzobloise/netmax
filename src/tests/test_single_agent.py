@@ -1,7 +1,7 @@
 import unittest
-from single_agent.influence_maximization import InfluenceMaximization
+from src.single_agent.influence_maximization import InfluenceMaximization
 import pandas as pd
-from common.utils import read_graph, __calculate_similarities__
+from src.common.utils import read_graph, __calculate_similarities__
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -50,7 +50,7 @@ class MyTestCase(unittest.TestCase):
     def test_twitter_d(self):
         # Test epinions_d_5
         df = pd.DataFrame()
-        g = read_graph('../data/twitter-d.txt')
+        g = read_graph('../src/data/twitter-d.txt')
         algo = ['group-pr']
         for a in algo:
             im = InfluenceMaximization(g, {'Agent_0': 8130}, alg=a, diff_model='ic', inf_prob='uniform', r=1)
