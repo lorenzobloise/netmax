@@ -21,12 +21,14 @@ NetMax is a python library that provides the implementation of several algorithm
         [ ] PMIA
         [ ] IPA
         [ ] LDAG
-    [ ] Add partial seed set to algorithms
-    [ ] Write a simulation method for competitive IM
+    [X] Add partial seed set to algorithms
+    [X] Write a simulation method for competitive IM
     [ ] Define a score for each node computing:
         - The marginal gain for the current agent
         - The average marginal gain for the other agents
         - The average of the two previous
+    [ ] Substitute tqdm with logger
+    [ ] Fix UBLF problem with singular matrixes
 
 ## Ideas
     - Add a Configuration object to IM

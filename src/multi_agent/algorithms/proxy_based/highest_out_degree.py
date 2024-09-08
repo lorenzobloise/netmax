@@ -6,8 +6,8 @@ class HighestOutDegree(ProxyBasedAlgorithm):
     """
     name = 'outdeg'
 
-    def __init__(self, graph, agent, budget, diff_model, r):
-        super().__init__(graph, agent, budget, diff_model, r)
+    def __init__(self, graph, agents, curr_agent_id, budget, diff_model, r):
+        super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
 
     def run(self):
         # TODO

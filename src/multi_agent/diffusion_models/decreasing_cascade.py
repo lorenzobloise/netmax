@@ -1,4 +1,4 @@
-from diffusion_model import DiffusionModel
+from src.multi_agent.diffusion_models.diffusion_model import DiffusionModel
 import src.multi_agent.competitive_influence_maximization as cim
 import random
 

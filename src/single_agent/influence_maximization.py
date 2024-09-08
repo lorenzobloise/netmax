@@ -35,6 +35,16 @@ def remove_isolated_nodes(graph):
     return mapping
 
 def simulation(graph, diff_model, agent_name, seed, r=10000, community=None):
+    """
+    Simulate the diffusion process in the graph thorugh the diffusion model specified.
+    :param graph: The input graph (networkx.DiGraph).
+    :param diff_model: The diffusion model to use.
+    :param agent_name: The name of the agent who activates the nodes.
+    :param seed: The initial set of nodes to activate.
+    :param r: Number of simulations to execute.
+
+    :return: (float) The average number of nodes activated in the graph.
+    """
     spread = 0
     for _ in tqdm(range(r), desc="Simulations", position=0, leave=True):
         active_set = diff_model.activate(graph, agent_name, seed)
