@@ -1,12 +1,16 @@
+from venv import logger
+
 import networkx as nx
 from src.common import utils
-from agent import Agent
+from src.multi_agent.agent import Agent
 from src.multi_agent.algorithms.algorithm import Algorithm
 from src.multi_agent.endorsement_policies.endorsement_policy import EndorsementPolicy
 from src.multi_agent.diffusion_models.diffusion_model import DiffusionModel
 from src.common.influence_probabilities.influence_probability import InfluenceProbability
 from tqdm import tqdm
 import time
+import logging
+
 
 def activate_node(graph, node, agent_name):
     """
@@ -15,6 +19,7 @@ def activate_node(graph, node, agent_name):
     :param node: The node to activate.
     :param agent_name: The agent that activates the node.
     """
+
     graph.nodes[node]['agent'] = agent_name
     graph.nodes[node]['status'] = 'ACTIVE'
     if 'contacted_by' in graph.nodes[node]:
@@ -126,16 +131,20 @@ class CompetitiveInfluenceMaximization:
         # Check and set the diffusion model, the algorithm and the influence probabilities
         diff_model_class, alg_class, inf_prob_class, endorsement_policy_class = self.__check_params__(diff_model, alg, inf_prob, endorsement_policy)
         self.inf_prob = inf_prob_class()
-        self.endorsement_policy = endorsement_policy_class()
+        self.endorsement_policy = endorsement_policy_class(self.graph)
         self.diff_model = diff_model_class(self.endorsement_policy)
-        self.mapping = self.__preprocess__()
-        self.result = None
         # Set the parameters
         self.insert_prob = insert_prob
         self.inv_edges = inv_edges
+        self.mapping = self.__preprocess__()
+        self.result = None
         self.r = r
         # Instantiate the algorithm
-        self.alg = alg_class(self.graph, self.agents, diff_model_class, inf_prob_class, insert_prob, inv_edges)
+        #self.alg = alg_class(self.graph, self.agents, diff_model_class, inf_prob_class, insert_prob, inv_edges)
+        self.alg = alg_class
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.logger = logging.getLogger(__name__)
+
 
     def __check_params__(self, diff_model_name, alg_name, inf_prob_name, endorsement_policy_name):
         """
@@ -168,6 +177,8 @@ class CompetitiveInfluenceMaximization:
         if self.insert_prob:
             for (source, target) in self.graph.edges:
                 self.graph[source][target]['p'] = self.inf_prob.get_prob(self.graph, source, target)
+        for node in self.graph.nodes:
+            self.graph.nodes[node]['status'] = 'INACTIVE'
         return mapping
 
     def __budget_fulfilled__(self, agent):
@@ -191,29 +202,40 @@ class CompetitiveInfluenceMaximization:
         """
         return all([self.__budget_fulfilled__(a) for a in self.agents])
 
+
     def run(self):
         start_time = time.time()
-        alg = self.alg(graph=self.graph, agent=None, budget=1, diff_model=self.diff_model, r=self.r)
+        alg = self.alg(graph=self.graph, agents=self.agents, curr_agent_id=None, budget=1, diff_model=self.diff_model, r=self.r)
+        self.logger.info("Starting the competitive influence maximization game")
         while not self.__game_over__():
-            for curr_agent in self.__get_agents_not_fulfilled__():
-                alg.set_agent(curr_agent.name)
+            self.logger.info("A round has started")
+            for agent in self.__get_agents_not_fulfilled__():
+                self.logger.info(f"Agent {agent.name} is playing")
+                alg.set_curr_agent(agent.id)
                 alg.set_graph(self.graph)
-                partial_seed = alg.run()
+                partial_seed, new_spread = alg.run()
                 if len(partial_seed) == 0:
                     raise RuntimeError(
-                        f"No more available nodes to add to the seed set of agent {curr_agent.name}. Budget not fulfilled by {curr_agent.budget - len(curr_agent.seed)}")
+                        f"No more available nodes to add to the seed set of agent {agent.name}. Budget not fulfilled by {agent.budget - len(agent.seed)}")
                 for node in partial_seed:
-                    activate_node(graph=self.graph, node=node, agent_name=curr_agent.name)
-                curr_agent.seed.extend(partial_seed)
+                    logger.info(f"Activating node {node} by agent {agent.name}")
+                    activate_node(graph=self.graph, node=node, agent_name=agent.name)
+                    logger.info(f"Node {node} activated now have status {self.graph.nodes[node]['status']}")
+                logger.info(f"Spread of agent {agent.name} updated with {new_spread} after adding {partial_seed} nodes")
+                agent.spread = new_spread
+                agent.seed.extend(partial_seed)
+                self.logger.info(f"Seed set of agent {agent.name} updated with {partial_seed[0]} node")
+            self.logger.info("A round has ended")
+        self.logger.info("Game over")
         execution_time = time.time() - start_time
         inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
-        spreads = {a.name: simulation(graph=self.graph, diff_model=self.diff_model, agents=self.agents, r=self.r) for a in self.agents}
+        spreads = simulation(graph=self.graph, diff_model=self.diff_model, agents=self.agents, r=self.r)
         for a in self.agents:
             a.seed = [inverse_mapping[s] for s in a.seed]
             a.spread = spreads[a.name]
         self.result = {
-            'seed': {a: a.seed for a in self.agents},
-            'spread': {a: a.spread for a in self.agents},
+            'seed': {a.name: a.seed for a in self.agents},
+            'spread': {a.name: a.spread for a in self.agents},
             'execution_time': execution_time
         }
         return self.result['seed']

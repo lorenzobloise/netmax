@@ -28,9 +28,9 @@ class GeneralTests(unittest.TestCase):
         # Test network datatset
         df = pd.DataFrame()
         g = read_graph('../../data/network.txt')
-        algo = ['degdis']
+        algo = ['mcgreedy']
         for a in algo:
-            im = InfluenceMaximization(g, 'Agent_0', 40, alg=a, diff_model='ic', inf_prob='uniform', r=1)
+            im = InfluenceMaximization(g, 'Agent_0', 9, alg=a, diff_model='ic', inf_prob='uniform', r=100)
             seed = im.run()
             spread = im.result['spread']
             execution_time = im.result['execution_time']

@@ -10,4 +10,4 @@ class Random(EndorsementPolicy):
         return
 
     def choose_agent(self, node, graph):
-        return random.choice(graph.nodes[node]['contacted_by'])
+        return random.choice(list(graph.nodes[node]['contacted_by']))

@@ -8,13 +8,9 @@ class ProxyBasedAlgorithm(Algorithm):
     to identify influential nodes in a network. These algorithms do not rely on extensive simulations
     but instead use structural properties of the graph to make decisions.
     """
-    def __init__(self, graph: nx.DiGraph, agent: Agent, budget, diff_model, r):
-        super().__init__(graph, agent, budget, diff_model, r)
-        self.graph = graph
-        self.agent = agent
-        self.budget = budget
-        self.diff_model = diff_model
-        self.r = r
+    def __init__(self, graph: nx.DiGraph, agents: list[Agent], curr_agent_id: int, budget, diff_model, r):
+        super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
+
 
     def run(self):
         raise NotImplementedError("This method must be implemented by subclasses")

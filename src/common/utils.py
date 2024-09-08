@@ -41,4 +41,5 @@ def find_hierarchy(superclass):
         else:
             subclasses.extend(find_hierarchy(subclass))
 
+
     return subclasses

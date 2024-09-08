@@ -15,8 +15,8 @@ class SimPath(ProxyBasedAlgorithm):
             self.spd_induced = 0
             self.flag = flag
 
-    def __init__(self, graph, agent, budget, diff_model, r):
-        super().__init__(graph, agent, budget, diff_model, r)
+    def __init__(self, graph, agents, curr_agent_id, budget, diff_model, r):
+        super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
         if diff_model.name != 'lt':
             raise ValueError(f"SimPath can only be executed under Linear Threshold diffusion model (set the argument at 'lt')")
         self.lookahead = 5
