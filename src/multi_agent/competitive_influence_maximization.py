@@ -1,5 +1,4 @@
 from venv import logger
-
 import networkx as nx
 from src.common import utils
 from src.multi_agent.agent import Agent
@@ -12,36 +11,36 @@ import time
 import logging
 
 
-def activate_node(graph, node, agent_name):
+def activate_node(graph, node, agent: Agent):
     """
     Activate a node in the graph by setting its status to 'ACTIVE' and the agent name that activated it.
     :param graph: The input graph (networkx.DiGraph).
     :param node: The node to activate.
-    :param agent_name: The agent that activates the node.
+    :param agent: The agent that activates the node.
     """
-
-    graph.nodes[node]['agent'] = agent_name
+    graph.nodes[node]['agent'] = agent
     graph.nodes[node]['status'] = 'ACTIVE'
     if 'contacted_by' in graph.nodes[node]:
         del graph.nodes[node]['contacted_by']
+    # TODO: opinion
 
-def contact_node(graph, node, agent_name):
+def contact_node(graph, node, agent: Agent):
     """
     Contact a node in the graph by setting its status to 'PENDING' and adding the agent name that contacted it.
     :param graph: The input graph (networkx.DiGraph).
     :param node: The node to contact.
-    :param agent_name: The agent that contacts the node.
+    :param agent: The agent that contacts the node.
     """
     graph.nodes[node]['status'] = 'PENDING'
     if 'contacted_by' not in graph.nodes[node]:
         graph.nodes[node]['contacted_by'] = set()
-    graph.nodes[node]['contacted_by'].add(agent_name)
+    graph.nodes[node]['contacted_by'].add(agent)
 
-def manage_pending_nodes(graph, endorsement_strategy):
+def manage_pending_nodes(graph, endorsement_policy):
     newly_activated = []
     for node in pending_nodes(graph):
-        chosen_agent_name = endorsement_strategy.choose_agent(node, graph)
-        activate_node(graph, node, chosen_agent_name)
+        chosen_agent = endorsement_policy.choose_agent(node, graph)
+        activate_node(graph, node, chosen_agent)
         newly_activated.append(node)
     return newly_activated
 
@@ -106,8 +105,8 @@ class CompetitiveInfluenceMaximization:
 
     def __init__(self, input_graph: nx.DiGraph, agents: list[Agent],
                  alg: str, diff_model, inf_prob: str = 'uniform',
-                 endorsement_policy: str = 'random',
-                 insert_prob: bool = False, inv_edges: bool = False, r: int = 100):
+                 endorsement_policy: str = 'random', insert_prob: bool = False,
+                 insert_opinion: bool = True, inv_edges: bool = False, r: int = 100):
         """
         Create an instance of the CompetitiveInfluenceMaximization class.
         :param input_graph: A directed graph representing the social network.
@@ -135,6 +134,7 @@ class CompetitiveInfluenceMaximization:
         self.diff_model = diff_model_class(self.endorsement_policy)
         # Set the parameters
         self.insert_prob = insert_prob
+        self.insert_opinion = insert_opinion
         self.inv_edges = inv_edges
         self.mapping = self.__preprocess__()
         self.result = None
@@ -179,6 +179,8 @@ class CompetitiveInfluenceMaximization:
                 self.graph[source][target]['p'] = self.inf_prob.get_prob(self.graph, source, target)
         for node in self.graph.nodes:
             self.graph.nodes[node]['status'] = 'INACTIVE'
+            if self.insert_opinion:
+                self.graph.nodes[node]['opinion'] = [1/len(self.agents) for _ in self.agents]
         return mapping
 
     def __budget_fulfilled__(self, agent):
@@ -219,7 +221,7 @@ class CompetitiveInfluenceMaximization:
                         f"No more available nodes to add to the seed set of agent {agent.name}. Budget not fulfilled by {agent.budget - len(agent.seed)}")
                 for node in partial_seed:
                     logger.info(f"Activating node {node} by agent {agent.name}")
-                    activate_node(graph=self.graph, node=node, agent_name=agent.name)
+                    activate_node(graph=self.graph, node=node, agent=agent)
                     logger.info(f"Node {node} activated now have status {self.graph.nodes[node]['status']}")
                 logger.info(f"Spread of agent {agent.name} updated with {new_spread} after adding {partial_seed} nodes")
                 agent.spread = new_spread

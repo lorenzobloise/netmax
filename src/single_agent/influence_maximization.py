@@ -68,7 +68,6 @@ def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=
 
 class InfluenceMaximization:
 
-    # TODO: fix hierarchy method in utils
     def __init__(self, input_graph: nx.DiGraph, agent: str, budget: int, alg: str = 'celf', diff_model: str = 'ic',
                  inf_prob: str = 'uniform', insert_prob: bool = False, inv_edges: bool = False, r: int = 100):
         """
@@ -95,6 +94,8 @@ class InfluenceMaximization:
         for (k, v) in {'alg': alg, 'diff_model': diff_model, 'inf_prob': inf_prob}.items():
             if v not in hierarchy.keys():
                 raise ValueError(f"Argument '{v}' not supported for field '{k}'")
+            if k == 'inf_prob' and v == 'opinion':
+                raise ValueError(f"Influence probability '{v}' not allowed in single-agent setting")
         self.insert_prob = insert_prob
         self.inv_edges = inv_edges
         self.r = r

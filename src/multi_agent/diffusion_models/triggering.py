@@ -31,7 +31,7 @@ class Triggering(DiffusionModel):
         sim_graph = graph.copy()
         for agent in agents:
             for u in agent.seed:
-                cim.activate_node(sim_graph, u, agent.name)
+                cim.activate_node(sim_graph, u, agent)
         active_set = cim.active_nodes(sim_graph)
         newly_activated = list(active_set)
         while len(newly_activated) > 0:

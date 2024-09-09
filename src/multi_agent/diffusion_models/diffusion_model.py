@@ -12,7 +12,7 @@ class DiffusionModel:
     def __group_by_agent__(self, graph, active_set):
         dict_result = {}
         for u in active_set:
-            curr_agent = graph.nodes[u]['agent']
+            curr_agent = graph.nodes[u]['agent'].name
             if curr_agent in dict_result:
                 dict_result[curr_agent].append(u)
             else:

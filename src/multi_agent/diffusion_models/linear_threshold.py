@@ -32,7 +32,7 @@ class LinearThreshold(DiffusionModel):
         sim_graph = graph.copy()
         for agent in agents:
             for u in agent.seed:
-                cim.activate_node(sim_graph, u, agent.name)
+                cim.activate_node(sim_graph, u, agent)
                 self.__update_prob_sum__(sim_graph, u, agent.name)
         active_set = cim.active_nodes(sim_graph)
         newly_activated = list(active_set)
@@ -41,14 +41,14 @@ class LinearThreshold(DiffusionModel):
             # First phase: try to influence inactive nodes
             # Each newly activated node tries to activate its inactive neighbors by contacting them
             for u in inactive_set:
-                curr_agent_name = sim_graph.nodes[u]['agent']
-                if sim_graph.nodes[u]['prob_sum'][curr_agent_name] >= sim_graph.nodes[u]['threshold']:
-                    cim.contact_node(sim_graph, u, curr_agent_name)
+                curr_agent = sim_graph.nodes[u]['agent']
+                if sim_graph.nodes[u]['prob_sum'][curr_agent.name] >= sim_graph.nodes[u]['threshold']:
+                    cim.contact_node(sim_graph, u, curr_agent)
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
             newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_strategy)
             active_set.extend(newly_activated)
             # Update the probability sum of the neighbour of newly activated nodes
             for u in newly_activated:
-                self.__update_prob_sum__(sim_graph, u, sim_graph.nodes[u]['agent'])
+                self.__update_prob_sum__(sim_graph, u, sim_graph.nodes[u]['agent'].name)
         # Group the activated nodes by agent and return the result
         return self.__group_by_agent__(sim_graph, active_set)

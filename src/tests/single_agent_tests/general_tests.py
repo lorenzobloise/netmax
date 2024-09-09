@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from src.common.utils import read_graph
+from src.common.utils import read_adjacency_matrix
 from src.single_agent.influence_maximization import InfluenceMaximization
 
 class GeneralTests(unittest.TestCase):
@@ -8,7 +8,7 @@ class GeneralTests(unittest.TestCase):
     def test_BigTestData(self):
         # Test BigTestData
         df = pd.DataFrame()
-        g = read_graph('../data/BigTestData.txt')
+        g = read_adjacency_matrix('../data/BigTestData.txt')
         algo = ['degdis']
         for a in algo:
             im = InfluenceMaximization(g, 'Agent_0', 40, alg=a, diff_model='ic', inf_prob='uniform', r=1)
@@ -27,7 +27,7 @@ class GeneralTests(unittest.TestCase):
     def test_network(self):
         # Test network datatset
         df = pd.DataFrame()
-        g = read_graph('../../data/network.txt')
+        g = read_adjacency_matrix('../../data/network.txt')
         algo = ['mcgreedy']
         for a in algo:
             im = InfluenceMaximization(g, 'Agent_0', 9, alg=a, diff_model='ic', inf_prob='uniform', r=100)
