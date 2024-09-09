@@ -1,6 +1,6 @@
 import networkx as nx
 
-def read_graph(input_path):
+def read_adjacency_matrix(input_path):
     """
     :return: The directed graph in networkx format
     :param input_path: Path of the dataset (.txt file)
@@ -15,6 +15,10 @@ def read_graph(input_path):
         start, end, weight = data_line.split()
         graph.add_edge(int(start), int(end), p=float(weight))
     return graph
+
+# TODO
+def read_gml(input_path):
+    return None
 
 def __my_similarity__(list1, list2):
     number_of_elements_of_list1_in_list2 = 0
@@ -40,6 +44,4 @@ def find_hierarchy(superclass):
             subclasses.append((subclass.name, subclass))
         else:
             subclasses.extend(find_hierarchy(subclass))
-
-
     return subclasses

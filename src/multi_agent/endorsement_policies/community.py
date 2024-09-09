@@ -21,6 +21,6 @@ class Community(EndorsementPolicy):
         scores = dict()
         for u in community:
             if cim.is_active(graph, u):
-                agent_name = graph.nodes[u]['agent']
-                scores[agent_name] = scores.get(agent_name, 0) + 1
+                agent = graph.nodes[u]['agent']
+                scores[agent] = scores.get(agent, 0) + 1
         return max(scores, key=scores.get)

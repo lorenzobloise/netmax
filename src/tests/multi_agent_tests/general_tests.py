@@ -1,7 +1,7 @@
 import unittest
 import random
 import pandas as pd
-from src.common.utils import read_graph
+from src.common.utils import read_adjacency_matrix
 import src.multi_agent.competitive_influence_maximization as cim
 from src.multi_agent.agent import Agent
 
@@ -28,11 +28,13 @@ class GeneralTests(unittest.TestCase):
     def test_network(self):
         # Test Network
         df = pd.DataFrame()
-        g = read_graph('../../data/network.txt')
+        g = read_adjacency_matrix('../../data/network.txt')
         algo = ['mcgreedy', 'celf']
         list_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
-            cim_instance = cim.CompetitiveInfluenceMaximization(input_graph=g, agents=list_of_agents, alg=a, diff_model='ic', inf_prob='uniform', r=100, endorsement_policy='random')
+            cim_instance = cim.CompetitiveInfluenceMaximization(input_graph=g, agents=list_of_agents, alg=a,
+                                                                diff_model='ic', inf_prob='uniform', r=100,
+                                                                endorsement_policy='random')
             seed = cim_instance.run()
             spread = cim_instance.result['spread']
             execution_time = cim_instance.result['execution_time']

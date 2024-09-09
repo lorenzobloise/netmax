@@ -23,7 +23,7 @@ class DecreasingCascade(DiffusionModel):
         sim_graph = graph.copy()
         for agent in agents:
             for u in agent.seed:
-                cim.activate_node(sim_graph, u, agent.name)
+                cim.activate_node(sim_graph, u, agent)
                 del sim_graph.nodes[u]['trials'] # Remove the trials attribute of the node to avoid memory waste
         active_set = cim.active_nodes(sim_graph)
         newly_activated = list(active_set)

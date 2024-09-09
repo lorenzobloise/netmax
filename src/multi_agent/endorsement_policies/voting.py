@@ -14,7 +14,7 @@ class Voting(EndorsementPolicy):
         for neighbor in graph[node]:
             # Check if the neighbor is already activated
             if cim.is_active(graph, neighbor):
-                agent_name = graph.nodes[neighbor]['agent']
-                voting[agent_name] = voting.get(agent_name, 0) + 1
+                agent = graph.nodes[neighbor]['agent']
+                voting[agent] = voting.get(agent, 0) + 1
         # Choose the agent with the most votes
         return max(voting, key=voting.get)

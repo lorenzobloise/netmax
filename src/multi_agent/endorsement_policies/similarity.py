@@ -16,7 +16,7 @@ class Similarity(EndorsementPolicy):
             # Check if the neighbor is already activated
             if cim.is_active(graph, neighbor):
                 # Compute similarity
-                agent_name = graph.nodes[neighbor]['agent']
-                scores[agent_name] = scores.get(agent_name, 0) + self.similarity[node][neighbor]
+                agent = graph.nodes[neighbor]['agent']
+                scores[agent] = scores.get(agent, 0) + self.similarity[node][neighbor]
         # Choose the agent with the most votes
         return max(scores, key=scores.get)
