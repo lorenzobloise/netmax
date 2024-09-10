@@ -7,6 +7,9 @@ class Similarity(InfluenceProbability):
 
     def __init__(self):
         super().__init__()
+        self.similarity = None
 
     def get_probability(self, graph, u, v):
-        return nx.simrank_similarity(graph, u, v)
+        if self.similarity is None:
+            self.similarity = nx.simrank_similarity(graph)
+        return self.similarity[u][v]

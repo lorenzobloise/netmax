@@ -1,5 +1,6 @@
 from venv import logger
 import networkx as nx
+import src.common.influence_probabilities
 from src.common import utils
 from src.multi_agent.agent import Agent
 from src.multi_agent.algorithms.algorithm import Algorithm
@@ -9,7 +10,6 @@ from src.common.influence_probabilities.influence_probability import InfluencePr
 from tqdm import tqdm
 import time
 import logging
-
 
 def activate_node(graph, node, agent: Agent):
     """
@@ -22,7 +22,8 @@ def activate_node(graph, node, agent: Agent):
     graph.nodes[node]['status'] = 'ACTIVE'
     if 'contacted_by' in graph.nodes[node]:
         del graph.nodes[node]['contacted_by']
-    # TODO: opinion
+    if graph.graph['inf_prob'] is not None:
+        graph.graph['inf_prob'].update_probability(graph, node)
 
 def contact_node(graph, node, agent: Agent):
     """
@@ -104,18 +105,17 @@ def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=
 class CompetitiveInfluenceMaximization:
 
     def __init__(self, input_graph: nx.DiGraph, agents: list[Agent],
-                 alg: str, diff_model, inf_prob: str = 'uniform',
-                 endorsement_policy: str = 'random', insert_prob: bool = False,
-                 insert_opinion: bool = True, inv_edges: bool = False, r: int = 100):
+                 alg: str, diff_model, inf_prob: str = None, endorsement_policy: str = 'random',
+                 insert_opinion: bool = False, inv_edges: bool = False, r: int = 100):
         """
         Create an instance of the CompetitiveInfluenceMaximization class.
         :param input_graph: A directed graph representing the social network.
         :param agents: A list of Agent instances.
         :param alg: The algorithm to use for influence maximization.
         :param diff_model: The diffusion model to use.
-        :param inf_prob: Probability distribution to generate (if needed) the probabilities of influence between nodes. The framework implements different probability distributions, default is 'uniform'.
+        :param inf_prob: Probability distribution to generate (if needed) the probabilities of influence between nodes. The framework implements different probability distributions, default is None.
         :param endorsement_policy: The policy that nodes use to choose which agent to endorse when they have been contacted by more than one agent. The framework implements different endorsement policies, default is 'random'.
-        :param insert_prob: A boolean indicating whether to insert probabilities.
+        :param insert_opinion: True if the nodes do not contain an information about their opinion on the agents, False otherwise or if the opinion is not used.
         :param inv_edges: A boolean indicating whether to invert the edges of the graph.
         :param r: Number of simulations to execute. Default is 100.
         """
@@ -129,11 +129,12 @@ class CompetitiveInfluenceMaximization:
                 f"The budget ({budget}) exceeds the number of nodes in the graph ({n_nodes}) by {budget - n_nodes}")
         # Check and set the diffusion model, the algorithm and the influence probabilities
         diff_model_class, alg_class, inf_prob_class, endorsement_policy_class = self.__check_params__(diff_model, alg, inf_prob, endorsement_policy)
-        self.inf_prob = inf_prob_class()
+        self.inf_prob = None if inf_prob_class is None else inf_prob_class()
         self.endorsement_policy = endorsement_policy_class(self.graph)
         self.diff_model = diff_model_class(self.endorsement_policy)
+        self.graph.graph['inf_prob'] = self.inf_prob
+        self.graph.graph['insert_opinion'] = insert_opinion
         # Set the parameters
-        self.insert_prob = insert_prob
         self.insert_opinion = insert_opinion
         self.inv_edges = inv_edges
         self.mapping = self.__preprocess__()
@@ -156,6 +157,7 @@ class CompetitiveInfluenceMaximization:
                                utils.find_hierarchy(DiffusionModel) +
                                utils.find_hierarchy(InfluenceProbability) +
                                utils.find_hierarchy(EndorsementPolicy))
+        hierarchy[None] = None
         for (k, v) in {'alg': alg_name, 'diff_model': diff_model_name, 'inf_prob': inf_prob_name, 'endorsement_policy': endorsement_policy_name}.items():
             if v not in list(hierarchy.keys()):
                 raise ValueError(f"Argument '{v}' not supported for field '{k}'")
@@ -174,13 +176,13 @@ class CompetitiveInfluenceMaximization:
         mapping = remove_isolated_nodes(self.graph)
         if self.inv_edges:
             self.graph = self.graph.reverse(copy=False)
-        if self.insert_prob:
-            for (source, target) in self.graph.edges:
-                self.graph[source][target]['p'] = self.inf_prob.get_prob(self.graph, source, target)
         for node in self.graph.nodes:
             self.graph.nodes[node]['status'] = 'INACTIVE'
             if self.insert_opinion:
                 self.graph.nodes[node]['opinion'] = [1/len(self.agents) for _ in self.agents]
+        if self.inf_prob is not None:
+            for (source, target) in self.graph.edges:
+                self.graph[source][target]['p'] = self.inf_prob.get_probability(self.graph, source, target)
         return mapping
 
     def __budget_fulfilled__(self, agent):
