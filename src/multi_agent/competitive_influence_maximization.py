@@ -93,8 +93,12 @@ def simulation(graph, diff_model, agents, r=10000, community=None):
 def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=None):
     spread = 0
     for _ in range(r):
+        #old set
+        #setta agents curr agent a seed 1
         active_set_1 = diff_model.activate(graph, agent, seed1)
+        #sett agents curr agent a seed 2
         active_set_2 = diff_model.activate(graph, agent, seed2)
+        # old2 
         if community is not None:
             active_set_1 = [node for node in active_set_1 if node in community]
             active_set_2 = [node for node in active_set_2 if node in community]

@@ -9,7 +9,7 @@ class CELF(SimulationBasedAlgorithm):
 
     def __init__(self, graph, agents, curr_agent_id, budget, diff_model, r):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
-        self.marginal_gains = None #List of tuples (node, marginal_gain)
+        self.marginal_gains = None # List of tuples (node, marginal_gain)
 
     def __first_monte_carlo__(self, sim_graph):
         """
@@ -27,7 +27,6 @@ class CELF(SimulationBasedAlgorithm):
             agents_copy[self.curr_agent_id].seed = agents_copy[self.curr_agent_id].seed[:-1]
         marginal_gains = sorted(marginal_gains, key=lambda item: item[1][self.agents[self.curr_agent_id].name], reverse=True)
         return marginal_gains
-
 
     def run(self):
         sim_graph = self.graph.copy()
