@@ -4,7 +4,7 @@ import networkx as nx
 
 class Similarity(EndorsementPolicy):
 
-    name = "similarity"
+    name = "similarity_endorsement"
 
     def __init__(self, graph):
         super().__init__(graph)

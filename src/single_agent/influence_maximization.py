@@ -91,11 +91,10 @@ class InfluenceMaximization:
         hierarchy: dict = dict(utils.find_hierarchy(Algorithm) +
                                utils.find_hierarchy(DiffusionModel) +
                                utils.find_hierarchy(InfluenceProbability))
+        del hierarchy['opinion'] # Opinion-based influence probability is not allowed in single-agent setting
         for (k, v) in {'alg': alg, 'diff_model': diff_model, 'inf_prob': inf_prob}.items():
             if v not in hierarchy.keys():
                 raise ValueError(f"Argument '{v}' not supported for field '{k}'")
-            if k == 'inf_prob' and v == 'opinion':
-                raise ValueError(f"Influence probability '{v}' not allowed in single-agent setting")
         self.insert_prob = insert_prob
         self.inv_edges = inv_edges
         self.r = r
