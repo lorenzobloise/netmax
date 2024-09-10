@@ -7,6 +7,7 @@ class CELF_PP(SimulationBasedAlgorithm):
     """
     Paper: Goyal et al. - "CELF++: Optimizing the Greedy Algorithm for Influence Maximization in Social Networks"
     """
+    # TODO
 
     name = 'celfpp'
 
@@ -18,8 +19,11 @@ class CELF_PP(SimulationBasedAlgorithm):
             self.prev_best = None
             self.mg2 = 0
             self.mg2_already_computed = False
-            self.flag = None
+            self.flag = 0
             self.list_index = 0
+
+        def __hash__(self):
+            return self.list_index
 
     def __init__(self, graph, agent, budget, diff_model, r):
         super().__init__(graph, agent, budget, diff_model, r)

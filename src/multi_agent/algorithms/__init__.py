@@ -4,3 +4,4 @@ from .proxy_based.simpath import SimPath
 from .proxy_based.group_pr import Group_PR
 from .simulation_based.mcgreedy import MCGreedy
 from .simulation_based.celf import CELF
+from .simulation_based.celfpp import CELF_PP

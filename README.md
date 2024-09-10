@@ -29,6 +29,7 @@ NetMax is a python library that provides the implementation of several algorithm
         - The average of the two previous
     [ ] Substitute tqdm with logger
     [ ] Fix UBLF problem with singular matrixes
+    [ ] Define algorithms with a queue for each agent when using opinion-based dynamic influence probabilities
 
 ## Ideas
     - Add a Configuration object to IM
@@ -42,6 +43,8 @@ NetMax is a python library that provides the implementation of several algorithm
         [ ] TIM+
         [ ] BKRIS
         [ ] SSA
+    - Add an opinion-based endorsement policy (maybe do not use it with opinion-based influence probability)
+    - Add a graph visualization tool
 
 ## Github links
     - https://github.com/snowgy/Influence_Maximization/blob/master/IMM.pdf (Paper)
