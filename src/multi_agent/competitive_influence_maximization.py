@@ -1,3 +1,4 @@
+import math
 from venv import logger
 import networkx as nx
 import src.common.influence_probabilities
@@ -77,9 +78,34 @@ def remove_nodes_not_in_community(community, active_sets):
         active_sets[agent_name] = [node for node in active_sets[agent_name] if node in community]
     return active_sets
 
+
+# 100 Thread
+
 def simulation(graph, diff_model, agents, r=10000, community=None):
+    import src.Parallel.my_thread as my_thread
+    import math
     spreads = dict()
-    for _ in tqdm(range(r), desc="Simulations", position=0, leave=True):
+    progress_bar = tqdm(total=r, desc='Simulations')
+    threads = [my_thread.MyThread(diff_model=diff_model,graph=graph,agents=agents,r=math.floor(r/4),id=i,progress_bar=progress_bar) for i in range(4)]
+
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    for thread in threads:
+        result = thread.get_result()
+        for agent_name in result.keys():
+            spreads[agent_name] = spreads.get(agent_name, 0) + result[agent_name]
+    for agent_name in spreads.keys():
+        spreads[agent_name] /= r
+    return spreads
+
+
+
+def simulation_old(graph, diff_model, agents, r=10000, community=None):
+    spreads = dict()
+    print(r)
+    for _ in (range(r)):
         active_sets = diff_model.activate(graph, agents)
         if community is not None:
             active_sets = remove_nodes_not_in_community(community, active_sets)
