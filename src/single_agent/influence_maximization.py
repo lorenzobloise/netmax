@@ -62,7 +62,8 @@ def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=
         if community is not None:
             active_set_1 = [node for node in active_set_1 if node in community]
             active_set_2 = [node for node in active_set_2 if node in community]
-        spread += len([x for x in active_set_1 if x not in active_set_2])
+        active_set = [x for x in active_set_1 if x not in active_set_2]
+        spread += len(active_set)
     spread = spread / r
     return spread
 

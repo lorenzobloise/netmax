@@ -89,22 +89,35 @@ def simulation(graph, diff_model, agents, r=10000, community=None):
         spreads[agent_name] /= r
     return spreads
 
-# TODO: change agent, seed with agents
-def simulation_delta(graph, diff_model, agent, seed1, seed2, r=10000, community=None):
-    spread = 0
+def simulation_delta(graph, diff_model, agents, curr_agent_id, seed1, seed2, r=10000, community=None):
+    """
+    Computes the spread as follows:
+    1) Computes the activated nodes from the first seed set {active_set_1}
+    2) Computes the activated nodes from the second seed set {active_set_2}
+    3) Returns a dictionary containing the average spread (on r experiments) of {active_set_1}-{active_set_2} for each agent
+    """
+    spreads = dict()
     for _ in range(r):
-        #old set
-        #setta agents curr agent a seed 1
-        active_set_1 = diff_model.activate(graph, agent, seed1)
-        #sett agents curr agent a seed 2
-        active_set_2 = diff_model.activate(graph, agent, seed2)
-        # old2 
+        old_seed_set = agents[curr_agent_id].__getattribute__('seed')
+        agents[curr_agent_id].__setattr__('seed', seed1)
+        active_sets_1 = diff_model.activate(graph, agents)
+        # Set agents curr agent a seed 2
+        agents[curr_agent_id].__setattr__('seed', seed2)
+        active_sets_2 = diff_model.activate(graph, agents)
+        # Restore old seed set
+        agents[curr_agent_id].__setattr__('seed', old_seed_set)
         if community is not None:
-            active_set_1 = [node for node in active_set_1 if node in community]
-            active_set_2 = [node for node in active_set_2 if node in community]
-        spread += len([x for x in active_set_1 if x not in active_set_2])
-    spread = spread / r
-    return spread
+            for agent_name in active_sets_1.keys():
+                active_sets_1[agent_name] = [node for node in active_sets_1[agent_name] if node in community]
+            for agent_name in active_sets_2.keys():
+                active_sets_2[agent_name] = [node for node in active_sets_2[agent_name] if node in community]
+        active_sets = dict()
+        for agent in agents:
+            active_sets[agent.name] = [x for x in active_sets_1[agent.name] if x not in active_sets_2[agent.name]]
+            spreads[agent.name] = spreads.get(agent.name, 0) + len(active_sets[agent.name])
+    for agent_name in spreads.keys():
+        spreads[agent_name] = spreads[agent_name] / r
+    return spreads
 
 class CompetitiveInfluenceMaximization:
 
@@ -129,8 +142,7 @@ class CompetitiveInfluenceMaximization:
         budget = sum([agent.budget for agent in agents])
         n_nodes = len(self.graph.nodes)
         if sum([agent.budget for agent in agents]) > len(self.graph.nodes):
-            raise ValueError(
-                f"The budget ({budget}) exceeds the number of nodes in the graph ({n_nodes}) by {budget - n_nodes}")
+            raise ValueError(f"The budget ({budget}) exceeds the number of nodes in the graph ({n_nodes}) by {budget - n_nodes}")
         # Check and set the diffusion model, the algorithm and the influence probabilities
         diff_model_class, alg_class, inf_prob_class, endorsement_policy_class = self.__check_params__(diff_model, alg, inf_prob, endorsement_policy)
         self.inf_prob = None if inf_prob_class is None else inf_prob_class()
@@ -209,7 +221,6 @@ class CompetitiveInfluenceMaximization:
         :return: True if the game is over, False otherwise
         """
         return all([self.__budget_fulfilled__(a) for a in self.agents])
-
 
     def run(self):
         start_time = time.time()
