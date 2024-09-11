@@ -33,7 +33,7 @@ class GeneralTests(unittest.TestCase):
         list_of_agents = self.__create_agents__(num_agents=4)
         for a in algo:
             cim_instance = cim.CompetitiveInfluenceMaximization(input_graph=g, agents=list_of_agents, alg=a,
-                                                                diff_model='ic', inf_prob=None, r=100,
+                                                                diff_model='ic', inf_prob=None, r=1000,
                                                                 insert_opinion=False, endorsement_policy='random')
             seed = cim_instance.run()
             spread = cim_instance.result['spread']
