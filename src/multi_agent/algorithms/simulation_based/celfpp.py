@@ -1,7 +1,11 @@
+import copy
 
 from src.multi_agent.algorithms.simulation_based.simulation_based import SimulationBasedAlgorithm
 from heapdict import heapdict
 import src.multi_agent.competitive_influence_maximization as cim
+
+
+
 
 class CELF_PP(SimulationBasedAlgorithm):
     """
@@ -33,7 +37,7 @@ class CELF_PP(SimulationBasedAlgorithm):
             result.mg2 = self.mg2
             result.mg2_already_computed = self.mg2_already_computed
             result.flag = self.flag
-            result.prev_best = self.prev_best._deepcopy__()
+            result.prev_best = None if self.prev_best is None else self.prev_best.__deepcopy__()
             return result
 
     def __init__(self, graph, agents, curr_agent_id, budget, diff_model, r):
@@ -44,36 +48,33 @@ class CELF_PP(SimulationBasedAlgorithm):
         self.curr_best = {}
 
     def __initialize_queues__(self, sim_graph, agents_copy):
-        self.queues = {}
-        Q = heapdict()  # Priority Queue based on marginal gain 1
+        self.queues = {self.curr_agent_id: heapdict()}
         for node in sim_graph.nodes:
             node_data=CELF_PP.Node(node)
-            agents_copy[self.curr_agent_id].seed = [node_data.node]
-            node_data.mg1 = cim.simulation(sim_graph, self.diff_model, agents_copy, self.r)
-            agents_copy[self.curr_agent_id].seed = []
+            node_data.mg1 = self.__do_simulation__(sim_graph, agents_copy,[node_data.node])
             node_data.prev_best = None if self.curr_agent_id not in self.curr_best else self.curr_best[self.curr_agent_id]
             node_data.flag = 0
-            if self.curr_agent_id in self.curr_best.keys() and self.curr_best[self.curr_agent_id].mg1 > node_data.mg1:
+            if self.curr_agent_id in self.curr_best.keys() and self.__get_curr_best__().mg1 > node_data.mg1:
                 self.curr_best[self.curr_agent_id] = self.curr_best[self.curr_agent_id]
             else:
                 self.curr_best[self.curr_agent_id] = node_data
             self.__add_element_to_the_queue__(node_data)
         # In the first iteration, the first agent's queue is replicated for all agents,
         # so we make a deep copy of the queue for all agents
-        for agent_id in self.agents:
-            if agent_id == self.curr_agent_id:
+        for agent in self.agents:
+            if agent.id == self.curr_agent_id:
                 continue
             #Manage the deep copy of the curr_best
-            self.curr_best[agent_id] = self.curr_best[self.curr_agent_id].__deepcopy__()
+            self.curr_best[agent.id] = self.__get_curr_best__().__deepcopy__()
             #Manage the deep copy of the queue
             q_copy = heapdict()
-            for node_data, neg_mg1 in list(Q.items()):
+            for node_data, neg_mg1 in list(self.queues[self.curr_agent_id].items()):
                 node_data_copy = node_data.__deepcopy__()
                 q_copy[node_data_copy] = neg_mg1
-            self.queues[agent_id] = q_copy
+            self.queues[agent.id] = q_copy
 
     def __add_element_to_the_queue__(self, node_data):
-        q=self.queues[self.curr_agent_id]
+        q = self.queues[self.curr_agent_id]
         q[node_data] = -node_data.mg1
 
     def __peek_top_element__(self):
@@ -81,16 +82,57 @@ class CELF_PP(SimulationBasedAlgorithm):
         node_data, neg_mg1 = q.peekitem()
         return node_data, neg_mg1
 
-    def __remove_element_from_the_queue__(self,node_data):
-        q = self.queues[self.curr_agent_id]
-        del q[node_data]
+    def __remove_element_from_the_queue__(self, node_data):
+        for agent in self.agents:
+            curr_id = agent.id
+            # Get the queue of the agent
+            q = self.queues[curr_id]
+            # Remove the node from the queue
+            for curr_node_data in q.keys():
+                if curr_node_data.node == node_data.node:
+                    del q[curr_node_data]
+                    break
+
     def __update_element_in_the_queue__(self, node_data):
         q = self.queues[self.curr_agent_id]
         q[node_data] = -node_data.mg1
 
+    def __do_simulation__(self, sim_graph, agents, seed_set=None):
+        old_seed_set = None
+        if seed_set is not None:
+            old_seed_set = agents[self.curr_agent_id].seed
+            agents[self.curr_agent_id].seed = seed_set
+        result: dict = cim.simulation(sim_graph, self.diff_model, agents, self.r)
+        if old_seed_set is not None:
+            agents[self.curr_agent_id].seed = old_seed_set
+        spread_curr_agent = result[self.agents[self.curr_agent_id].name]
+        return spread_curr_agent
+
+    def __do_simulation_delta__(self, sim_graph, agents, seed_1, seed_2):
+        """
+        Run the simulation for the current agent (the agent that is currently running the algorithm)
+        :return: the spread of the current agent
+        """
+        result: dict = cim.simulation_delta(sim_graph, self.diff_model, agents, self.curr_agent_id, seed_1, seed_2, self.r)
+        spread_curr_agent = result[self.agents[self.curr_agent_id].name]
+        return spread_curr_agent
+
+    def __get_seed_set__(self, agents):
+        """
+        Get the seed set of the current agent (the agent that is currently running the algorithm)
+        """
+        return agents[self.curr_agent_id].__getattribute__('seed')
+
+    def __get_curr_best__(self):
+        """
+        Get the current best node for the current agent (the agent that is currently running the algorithm)
+        from the curr_best dictionary
+        """
+        return self.curr_best[self.curr_agent_id]
+
     def run(self):
         sim_graph = self.graph.copy()
-        agents_copy = self.agents.copy()
+        agents_copy = copy.deepcopy(self.agents)
         # If the queues are not initialized, initialize them, then do the first iteration pass of CELF++
         if self.queues is None:
             self.__initialize_queues__(sim_graph, agents_copy)
@@ -100,11 +142,8 @@ class CELF_PP(SimulationBasedAlgorithm):
             while not seed_added:
                 node_data, _ = self.__peek_top_element__()
                 if not node_data.mg2_already_computed:
-                    old_seed_set = agents_copy[self.curr_agent_id].seed
-                    agents_copy[self.curr_agent_id].seed = [node_data.node] + [self.curr_best[self.curr_agent_id].node]
-                    node_data.mg2 = cim.simulation(sim_graph, self.diff_model, agents_copy, self.r)
+                    node_data.mg2 = self.__do_simulation__(sim_graph, agents_copy, [node_data.node] + [self.__get_curr_best__().node])
                     node_data.mg2_already_computed = True
-                    agents_copy[self.curr_agent_id].seed = old_seed_set
                 if node_data.flag == len(agents_copy[self.curr_agent_id].seed):
                     agents_copy[self.curr_agent_id].seed.append(node_data.node)
                     self.__remove_element_from_the_queue__(node_data)
@@ -114,13 +153,17 @@ class CELF_PP(SimulationBasedAlgorithm):
                 elif node_data.prev_best == self.last_seed[self.curr_agent_id]:
                     node_data.mg1 = node_data.mg2
                 else:
-                    node_data.mg1 = cim.simulalation_delta() # TODO: implement this
-                    node_data.prev_best = self.curr_best[self.curr_agent_id]
-                    node_data.mg2 = cim.simulation_delta() # TODO: implement this
+                    seed_1 = self.__get_seed_set__(agents_copy) + [node_data.node]
+                    seed_2 = self.__get_seed_set__(agents_copy)
+                    node_data.mg1 = self.__do_simulation_delta__(sim_graph, agents_copy, seed_1, seed_2)
+                    node_data.prev_best = self.__get_curr_best__()
+                    seed_1 = self.__get_seed_set__(agents_copy) + [self.__get_curr_best__().node] + [node_data.node]
+                    seed_2 = self.__get_seed_set__(agents_copy) + [self.__get_curr_best__().node]
+                    node_data.mg2 = self.__do_simulation_delta__(sim_graph, agents_copy, seed_1, seed_2)
                 node_data.flag = len(agents_copy[self.curr_agent_id].seed)
                 if (self.curr_agent_id in self.curr_best.keys() and
-                    self.curr_best[self.curr_agent_id].mg1 > node_data.mg1):
-                    self.curr_best[self.curr_agent_id] = self.curr_best[self.curr_agent_id]
+                    self.__get_curr_best__().mg1 > node_data.mg1):
+                    self.curr_best[self.curr_agent_id] = self.__get_curr_best__()
                 else:
                     self.curr_best[self.curr_agent_id] = node_data
                 self.__update_element_in_the_queue__(node_data)
