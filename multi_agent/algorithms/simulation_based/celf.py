@@ -60,10 +60,9 @@ class CELF(SimulationBasedAlgorithm):
         q[u] = -new_marg_gain
 
     def run(self):
-        sim_graph = self.graph.copy()
         agents_copy = copy.deepcopy(self.agents)
         if self.queues is None:
-            self.__first_monte_carlo__(graph=sim_graph, agents=agents_copy)
+            self.__first_monte_carlo__(graph=self.graph, agents=agents_copy)
             top_node, top_marginal_gain = self.__pop_top_node_and_marginal_gain__()
             return [top_node], top_marginal_gain
         for _ in range(self.budget):
@@ -71,7 +70,7 @@ class CELF(SimulationBasedAlgorithm):
             while not check:
                 u, _ = self.__peek_top_node_and_marginal_gain__()
                 # Do a simulation with the new seed set
-                curr_marg_gain = self.__get_marginal_gain_of_u__(sim_graph, agents_copy, u)
+                curr_marg_gain = self.__get_marginal_gain_of_u__(self.graph, agents_copy, u)
                 self.__update_queue_of_the_current_agent__(u, curr_marg_gain)
                 curr_top_node, _ = self.__peek_top_node_and_marginal_gain__()
                 if curr_top_node == u:

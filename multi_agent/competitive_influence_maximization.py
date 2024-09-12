@@ -1,5 +1,7 @@
 from venv import logger
 import networkx as nx
+import numpy as np
+
 from common import utils
 from multi_agent.agent import Agent
 from multi_agent.algorithms.algorithm import Algorithm
@@ -44,7 +46,7 @@ def manage_pending_nodes(graph, endorsement_policy):
         newly_activated.append(node)
     return newly_activated
 
-def active_nodes(graph):
+def active_nodes(graph: nx.DiGraph):
     return [u for u in graph.nodes if is_active(u, graph)]
 
 def inactive_nodes(graph):
@@ -79,13 +81,13 @@ def remove_nodes_not_in_community(community, active_sets):
 
 # 100 Thread
 
-def simulation(graph, diff_model, agents, r=10000, community=None):
+def simulation_old(graph, diff_model, agents, r=10000, community=None):
     import Parallel.my_thread as my_thread
     import math
     spreads = dict()
     progress_bar = tqdm(total=r, desc='Simulations')
-    threads = [my_thread.MyThread(diff_model=diff_model, graph=graph, agents=agents, r=math.floor(r / 4), id=i, progress_bar=progress_bar) for i in range(4)]
-
+    num_threads = 10
+    threads = [my_thread.MyThread(diff_model=diff_model, graph=graph, agents=agents, r=math.floor(r / num_threads), id=i, progress_bar=progress_bar) for i in range(num_threads)]
     for thread in threads:
         thread.start()
     for thread in threads:
@@ -98,9 +100,8 @@ def simulation(graph, diff_model, agents, r=10000, community=None):
         spreads[agent_name] /= r
     return spreads
 
-def simulation_old(graph, diff_model, agents, r=10000, community=None):
+def simulation(graph, diff_model, agents, r=10000, community=None):
     spreads = dict()
-    print(r)
     for _ in (range(r)):
         active_sets = diff_model.activate(graph, agents)
         if community is not None:
@@ -158,7 +159,7 @@ class CompetitiveInfluenceMaximization:
         :param inv_edges: A boolean indicating whether to invert the edges of the graph.
         :param r: Number of simulations to execute. Default is 100.
         """
-        self.graph = input_graph.copy()
+        self.graph = input_graph.copy() # TODO
         self.agents = agents
         # Check if the graph is compatible
         budget = sum([agent.budget for agent in agents])
@@ -183,7 +184,6 @@ class CompetitiveInfluenceMaximization:
         self.alg = alg_class
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger(__name__)
-
 
     def __check_params__(self, diff_model_name, alg_name, inf_prob_name, endorsement_policy_name):
         """

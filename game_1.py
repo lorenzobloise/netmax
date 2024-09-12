@@ -19,7 +19,7 @@ def reset_agents(agents):
     return agents
 
 df = pd.DataFrame()
-g = read_adjacency_matrix('data/BigTestData.txt')
+g = read_adjacency_matrix('data/network.txt')
 algo = ['mcgreedy', 'celf', 'celfpp']
 list_of_agents = __create_agents__(num_agents=4)
 for a in algo:

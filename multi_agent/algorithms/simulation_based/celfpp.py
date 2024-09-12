@@ -131,18 +131,17 @@ class CELF_PP(SimulationBasedAlgorithm):
         return self.curr_best[self.curr_agent_id]
 
     def run(self):
-        sim_graph = self.graph.copy()
         agents_copy = copy.deepcopy(self.agents)
         # If the queues are not initialized, initialize them, then do the first iteration pass of CELF++
         if self.queues is None:
-            self.__initialize_queues__(sim_graph, agents_copy)
+            self.__initialize_queues__(self.graph, agents_copy)
         # Other iterations
         for i in range(self.budget):
             seed_added = False
             while not seed_added:
                 node_data, _ = self.__peek_top_element__()
                 if not node_data.mg2_already_computed:
-                    node_data.mg2 = self.__do_simulation__(sim_graph, agents_copy, [node_data.node] + [self.__get_curr_best__().node])
+                    node_data.mg2 = self.__do_simulation__(self.graph, agents_copy, [node_data.node] + [self.__get_curr_best__().node])
                     node_data.mg2_already_computed = True
                 if node_data.flag == len(agents_copy[self.curr_agent_id].seed):
                     agents_copy[self.curr_agent_id].seed.append(node_data.node)
@@ -155,11 +154,11 @@ class CELF_PP(SimulationBasedAlgorithm):
                 else:
                     seed_1 = self.__get_seed_set__(agents_copy) + [node_data.node]
                     seed_2 = self.__get_seed_set__(agents_copy)
-                    node_data.mg1 = self.__do_simulation_delta__(sim_graph, agents_copy, seed_1, seed_2)
+                    node_data.mg1 = self.__do_simulation_delta__(self.graph, agents_copy, seed_1, seed_2)
                     node_data.prev_best = self.__get_curr_best__()
                     seed_1 = self.__get_seed_set__(agents_copy) + [self.__get_curr_best__().node] + [node_data.node]
                     seed_2 = self.__get_seed_set__(agents_copy) + [self.__get_curr_best__().node]
-                    node_data.mg2 = self.__do_simulation_delta__(sim_graph, agents_copy, seed_1, seed_2)
+                    node_data.mg2 = self.__do_simulation_delta__(self.graph, agents_copy, seed_1, seed_2)
                 node_data.flag = len(agents_copy[self.curr_agent_id].seed)
                 if (self.curr_agent_id in self.curr_best.keys() and
                     self.__get_curr_best__().mg1 > node_data.mg1):
