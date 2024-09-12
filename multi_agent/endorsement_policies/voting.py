@@ -7,7 +7,6 @@ class Voting(EndorsementPolicy):
 
     def __init__(self, graph):
         super().__init__(graph)
-        return
 
     def choose_agent(self, node, graph):
         voting = dict()

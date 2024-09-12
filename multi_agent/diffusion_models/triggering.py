@@ -9,8 +9,8 @@ class Triggering(DiffusionModel):
 
     name = 'tr'
 
-    def __init__(self, endorsement_strategy):
-        super().__init__(endorsement_strategy)
+    def __init__(self, endorsement_policy):
+        super().__init__(endorsement_policy)
 
     def preprocess_data(self, graph):
         for node in graph.nodes:
@@ -42,7 +42,7 @@ class Triggering(DiffusionModel):
                     if not cim.is_active(v, sim_graph):
                         cim.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
-            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_strategy)
+            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_policy)
             active_set.extend(newly_activated)
         # Group the activated nodes by agent and return the result
         return self.__group_by_agent__(sim_graph, active_set)

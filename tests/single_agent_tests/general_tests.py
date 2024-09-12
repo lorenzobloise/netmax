@@ -30,7 +30,7 @@ class GeneralTests(unittest.TestCase):
         g = read_adjacency_matrix('../../data/network.txt')
         algo = ['mcgreedy']
         for a in algo:
-            im = InfluenceMaximization(g, 'Agent_0', 9, alg=a, diff_model='ic', inf_prob='uniform', r=100)
+            im = InfluenceMaximization(g, 'Agent_0', 10, alg=a, diff_model='ic', inf_prob='uniform', r=100)
             seed = im.run()
             spread = im.result['spread']
             execution_time = im.result['execution_time']

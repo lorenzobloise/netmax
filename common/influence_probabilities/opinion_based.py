@@ -36,3 +36,7 @@ class OpinionBased(InfluenceProbability):
         out_edges = graph.out_edges(u, data=True)
         for (_, v, attr) in out_edges:
             attr['p'] = self.get_probability(graph, u, v)
+
+    def restore_probability(self, graph, u):
+        # TODO
+        pass

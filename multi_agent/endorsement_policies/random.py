@@ -7,7 +7,6 @@ class Random(EndorsementPolicy):
 
     def __init__(self, graph):
         super().__init__(graph)
-        return
 
     def choose_agent(self, node, graph):
         return random.choice(list(graph.nodes[node]['contacted_by']))
