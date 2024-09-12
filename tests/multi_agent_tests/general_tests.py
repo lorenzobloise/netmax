@@ -9,14 +9,15 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_colwidth', None)
 
+
 class GeneralTests(unittest.TestCase):
 
     def __create_agents__(self, num_agents):
         agents = []
         for i in range(num_agents):
             agent_name = 'Agent_' + str(i)
-            agent = Agent(agent_name,random.randint(10,10))
-            agent.__setattr__('id',i)
+            agent = Agent(agent_name, random.randint(10, 10))
+            agent.__setattr__('id', i)
             agents.append(agent)
         return agents
 
@@ -28,7 +29,7 @@ class GeneralTests(unittest.TestCase):
     def test_network(self):
         # Test Network
         df = pd.DataFrame()
-        g = read_adjacency_matrix('../../data/BigTestData.txt')
+        g = read_adjacency_matrix('../../data/network.txt')
         algo = ['mcgreedy', 'celf', 'celfpp']
         list_of_agents = self.__create_agents__(num_agents=4)
         for a in algo:
