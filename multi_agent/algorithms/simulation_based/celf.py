@@ -2,6 +2,7 @@ from heapdict import heapdict
 from multi_agent.algorithms.simulation_based.simulation_based import SimulationBasedAlgorithm
 import copy
 import multi_agent.competitive_influence_maximization as cim
+from tqdm import tqdm
 
 class CELF(SimulationBasedAlgorithm):
 
@@ -17,7 +18,7 @@ class CELF(SimulationBasedAlgorithm):
         :return: dictionary of marginal gains of each node sorted in descending order by marginal gain
         """
         self.queues = {agent.id: heapdict() for agent in agents}
-        for u in cim.inactive_nodes(graph):
+        for u in tqdm(cim.inactive_nodes(graph), desc="Inactive nodes"):
             agents[self.curr_agent_id].seed.append(u)
             spreads = cim.simulation(graph=graph, diff_model=self.diff_model, agents=agents, r=self.r)
             spread_value = spreads[self.agents[self.curr_agent_id].name]

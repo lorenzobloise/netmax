@@ -31,7 +31,8 @@ def deactivate_node(graph, node):
     :param node: The node to deactivate.
     """
     graph.nodes[node]['status'] = 'INACTIVE'
-    del graph.nodes[node]['agent']
+    if 'agent' in graph.nodes[node].keys():
+        del graph.nodes[node]['agent']
     if graph.graph['inf_prob'] is not None:
         graph.graph['inf_prob'].update_probability(graph, node)
 
@@ -96,9 +97,9 @@ def concurrent_simulation(graph, agents, diff_model, r):
     result = spreads
     return result
 
-def simulation(graph, diff_model, agents, r=10000, community=None):
+def simulation_old(graph, diff_model, agents, r=10000, community=None):
     spreads = dict()
-    num_threads = 100
+    num_threads = 8
     with ProcessPoolExecutor() as exe:
         futures = []
         for i in range(num_threads):
@@ -113,8 +114,7 @@ def simulation(graph, diff_model, agents, r=10000, community=None):
         spreads[agent_name] /= r
     return spreads
 
-
-def simulation_old(graph, diff_model, agents, r=10000, community=None):
+def simulation(graph, diff_model, agents, r=10000, community=None):
     spreads = dict()
     for _ in (range(r)):
         active_sets = diff_model.activate(graph, agents)

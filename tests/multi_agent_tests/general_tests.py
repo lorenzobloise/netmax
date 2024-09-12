@@ -9,7 +9,6 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_colwidth', None)
 
-
 class GeneralTests(unittest.TestCase):
 
     def __create_agents__(self, num_agents):
@@ -29,8 +28,8 @@ class GeneralTests(unittest.TestCase):
     def test_network(self):
         # Test Network
         df = pd.DataFrame()
-        g = read_adjacency_matrix('../../data/network.txt')
-        algo = ['mcgreedy']
+        g = read_adjacency_matrix('../../data/NetHEPT.txt')
+        algo = ['celfpp']
         list_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             cim_instance = cim.CompetitiveInfluenceMaximization(input_graph=g, agents=list_of_agents, alg=a,
