@@ -1,7 +1,16 @@
 class DiffusionModel:
 
-    def __init__(self, endorsement_strategy):
-        self.endorsement_strategy = endorsement_strategy
+    def __init__(self, endorsement_policy):
+        self.endorsement_policy = endorsement_policy
+        self.sim_graph = None
+
+    def __copy__(self):
+        result = DiffusionModel(self.endorsement_policy)
+        if self.sim_graph is not None:
+            result.sim_graph = self.sim_graph.copy()
+            for key, value in self.sim_graph.graph.items():  # Copy the graph's attributes
+                result.sim_graph.graph[key] = value
+        return result
 
     def preprocess_data(self, graph):
         raise NotImplementedError("This method must be implemented by subclasses")

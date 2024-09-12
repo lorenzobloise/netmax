@@ -31,6 +31,10 @@ NetMax is a python library that provides the implementation of several algorithm
     [ ] Fix UBLF problem with singular matrixes
     [ ] Define algorithms with a queue for each agent when using opinion-based dynamic influence probabilities
     [ ] Modify agents parameter inside competitive_influence_maximization.py
+    [ ] Do in single-agent the same modifications done in multi-agent
+    [ ] Fix multi-agent diffusion models
+    [ ] Add multi-processing from the following link:
+        https://stackoverflow.com/questions/78510868/python-threads-do-not-utilize-cpu-cores-fully
 
 ## Ideas
     - Add a Configuration object to IM

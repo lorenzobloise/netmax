@@ -1,11 +1,8 @@
 import copy
-
 from multi_agent.algorithms.simulation_based.simulation_based import SimulationBasedAlgorithm
 from heapdict import heapdict
 import multi_agent.competitive_influence_maximization as cim
-
-
-
+from tqdm import tqdm
 
 class CELF_PP(SimulationBasedAlgorithm):
     """
@@ -49,7 +46,7 @@ class CELF_PP(SimulationBasedAlgorithm):
 
     def __initialize_queues__(self, sim_graph, agents_copy):
         self.queues = {self.curr_agent_id: heapdict()}
-        for node in sim_graph.nodes:
+        for node in tqdm(sim_graph.nodes, desc="Inactive nodes"):
             node_data=CELF_PP.Node(node)
             node_data.mg1 = self.__do_simulation__(sim_graph, agents_copy,[node_data.node])
             node_data.prev_best = None if self.curr_agent_id not in self.curr_best else self.curr_best[self.curr_agent_id]
@@ -136,6 +133,7 @@ class CELF_PP(SimulationBasedAlgorithm):
         if self.queues is None:
             self.__initialize_queues__(self.graph, agents_copy)
         # Other iterations
+        progress_bar = tqdm(total=self.budget, desc='Agent ' + str(self.curr_agent_id) + ' has chosen the next seed with CELF++')
         for i in range(self.budget):
             seed_added = False
             while not seed_added:
@@ -148,6 +146,7 @@ class CELF_PP(SimulationBasedAlgorithm):
                     self.__remove_element_from_the_queue__(node_data)
                     self.last_seed[self.curr_agent_id] = node_data
                     seed_added = True
+                    progress_bar.update(1)
                     continue
                 elif node_data.prev_best == self.last_seed[self.curr_agent_id]:
                     node_data.mg1 = node_data.mg2

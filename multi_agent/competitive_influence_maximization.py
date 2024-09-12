@@ -1,16 +1,14 @@
 from venv import logger
 import networkx as nx
-import numpy as np
-
 from common import utils
 from multi_agent.agent import Agent
 from multi_agent.algorithms.algorithm import Algorithm
 from multi_agent.endorsement_policies.endorsement_policy import EndorsementPolicy
 from multi_agent.diffusion_models.diffusion_model import DiffusionModel
 from common.influence_probabilities.influence_probability import InfluenceProbability
-from tqdm import tqdm
 import time
 import logging
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 def activate_node(graph, node, agent: Agent):
     """
@@ -26,6 +24,17 @@ def activate_node(graph, node, agent: Agent):
     if graph.graph['inf_prob'] is not None:
         graph.graph['inf_prob'].update_probability(graph, node)
 
+def deactivate_node(graph, node):
+    """
+    Deactivate a node in the graph by setting its status to 'INACTIVE' and deleting the agent name.
+    :param graph: The input graph (networkx.DiGraph).
+    :param node: The node to deactivate.
+    """
+    graph.nodes[node]['status'] = 'INACTIVE'
+    del graph.nodes[node]['agent']
+    if graph.graph['inf_prob'] is not None:
+        graph.graph['inf_prob'].update_probability(graph, node)
+
 def contact_node(graph, node, agent: Agent):
     """
     Contact a node in the graph by setting its status to 'PENDING' and adding the agent name that contacted it.
@@ -38,9 +47,9 @@ def contact_node(graph, node, agent: Agent):
         graph.nodes[node]['contacted_by'] = set()
     graph.nodes[node]['contacted_by'].add(agent)
 
-def manage_pending_nodes(graph, endorsement_policy):
+def manage_pending_nodes(graph, endorsement_policy, pending_nodes_list):
     newly_activated = []
-    for node in pending_nodes(graph):
+    for node in pending_nodes_list:
         chosen_agent = endorsement_policy.choose_agent(node, graph)
         activate_node(graph, node, chosen_agent)
         newly_activated.append(node)
@@ -78,29 +87,34 @@ def remove_nodes_not_in_community(community, active_sets):
         active_sets[agent_name] = [node for node in active_sets[agent_name] if node in community]
     return active_sets
 
-
-# 100 Thread
-
-def simulation_old(graph, diff_model, agents, r=10000, community=None):
-    import Parallel.my_thread as my_thread
-    import math
+def concurrent_simulation(graph, agents, diff_model, r):
     spreads = dict()
-    progress_bar = tqdm(total=r, desc='Simulations')
-    num_threads = 10
-    threads = [my_thread.MyThread(diff_model=diff_model, graph=graph, agents=agents, r=math.floor(r / num_threads), id=i, progress_bar=progress_bar) for i in range(num_threads)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-    for thread in threads:
-        result = thread.get_result()
-        for agent_name in result.keys():
-            spreads[agent_name] = spreads.get(agent_name, 0) + result[agent_name]
+    for i in range(r):
+        active_sets = diff_model.activate(graph, agents)
+        for agent_name in active_sets.keys():
+            spreads[agent_name] = spreads.get(agent_name, 0) + len(active_sets[agent_name])
+    result = spreads
+    return result
+
+def simulation(graph, diff_model, agents, r=10000, community=None):
+    spreads = dict()
+    num_threads = 100
+    with ProcessPoolExecutor() as exe:
+        futures = []
+        for i in range(num_threads):
+            srange = int((i + 1) * r / num_threads)-int(i * r / num_threads)
+            future = exe.submit(concurrent_simulation, graph, agents, diff_model.__copy__(), srange)
+            futures.append(future)
+        for f in as_completed(futures):
+            result = f.result()
+            for agent_name in result.keys():
+                spreads[agent_name] = spreads.get(agent_name, 0) + result[agent_name]
     for agent_name in spreads.keys():
         spreads[agent_name] /= r
     return spreads
 
-def simulation(graph, diff_model, agents, r=10000, community=None):
+
+def simulation_old(graph, diff_model, agents, r=10000, community=None):
     spreads = dict()
     for _ in (range(r)):
         active_sets = diff_model.activate(graph, agents)
@@ -179,6 +193,7 @@ class CompetitiveInfluenceMaximization:
         self.mapping = self.__preprocess__()
         self.result = None
         self.r = r
+        self.diff_model.preprocess_data(self.graph)
         # Instantiate the algorithm
         #self.alg = alg_class(self.graph, self.agents, diff_model_class, inf_prob_class, insert_prob, inv_edges)
         self.alg = alg_class

@@ -9,8 +9,8 @@ class LinearThreshold(DiffusionModel):
 
     name = 'lt'
 
-    def __init__(self, endorsement_strategy):
-        super().__init__(endorsement_strategy)
+    def __init__(self, endorsement_policy):
+        super().__init__(endorsement_policy)
 
     def preprocess_data(self, graph):
         for node in graph.nodes:
@@ -45,7 +45,7 @@ class LinearThreshold(DiffusionModel):
                 if sim_graph.nodes[u]['prob_sum'][curr_agent.name] >= sim_graph.nodes[u]['threshold']:
                     cim.contact_node(sim_graph, u, curr_agent)
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
-            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_strategy)
+            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_policy)
             active_set.extend(newly_activated)
             # Update the probability sum of the neighbour of newly activated nodes
             for u in newly_activated:
