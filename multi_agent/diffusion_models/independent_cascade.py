@@ -59,7 +59,7 @@ class IndependentCascade(DiffusionModel):
         """
         stack_active_nodes = self.sim_graph.graph['stack_active_nodes']
         while len(stack_active_nodes) > 0:
-            node=stack_active_nodes.pop()
+            node = stack_active_nodes.pop()
             cim.deactivate_node(self.sim_graph, node)
 
     def __add_node_to_the_stack__(self, node):
