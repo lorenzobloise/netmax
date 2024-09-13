@@ -14,15 +14,6 @@ class SimulationBasedAlgorithm(Algorithm):
     def __init__(self, graph: nx.DiGraph, agents: list[Agent], curr_agent_id: int, budget, diff_model, r):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
 
+
     def run(self):
         raise NotImplementedError("This method must be implemented by subclasses")
-
-    def __get_marginal_gain_of_u__(self, graph, agents, u):
-        """
-        :return: marginal gain of node u
-        """
-        agents[self.curr_agent_id].seed = agents[self.curr_agent_id].seed + [u]
-        spread_before = agents[self.curr_agent_id].spread
-        curr_marg_gain = cim.simulation(graph, self.diff_model, agents, self.r)[self.agents[self.curr_agent_id].name] - spread_before
-        agents[self.curr_agent_id].seed = agents[self.curr_agent_id].seed[:-1]
-        return curr_marg_gain

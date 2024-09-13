@@ -7,7 +7,6 @@ class CELF_PP(SimulationBasedAlgorithm):
     """
     Paper: Goyal et al. - "CELF++: Optimizing the Greedy Algorithm for Influence Maximization in Social Networks"
     """
-    # TODO
 
     name = 'celfpp'
 
@@ -40,6 +39,13 @@ class CELF_PP(SimulationBasedAlgorithm):
             node_data = CELF_PP.Node(node)
             node_data.mg1 = im.simulation(sim_graph, self.diff_model, self.agent, [node_data.node], self.r)
             node_data.prev_best = cur_best
+            """
+            # TODO: remove mg2 computation
+            if cur_best and cur_best.node != node_data.node:
+                node_data.mg2 = im.simulation(sim_graph, self.diff_model, self.agent, [node_data.node] + [cur_best.node], self.r)
+            else:
+                node_data.mg2 = node_data.mg1
+            """
             node_data.flag = 0
             cur_best = cur_best if cur_best and cur_best.mg1 > node_data.mg1 else node_data
             node_data_list.append(node_data)
@@ -52,19 +58,28 @@ class CELF_PP(SimulationBasedAlgorithm):
             node_data = node_data_list[node_idx]
             if not node_data.mg2_already_computed:
                 node_data.mg2 = im.simulation(sim_graph, self.diff_model, self.agent, [node_data.node] + [cur_best.node], self.r)
+                #node_data.mg2 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set + [cur_best.node] + [node_data.node], seed_set + [cur_best.node], self.r)
                 node_data.mg2_already_computed = True
             if node_data.flag == len(seed_set):
                 seed_set.append(node_data.node)
                 progress_bar.update(1)
                 del Q[node_idx]
                 last_seed = node_data
+                #cur_best = None # TODO: edit
                 continue
             elif node_data.prev_best == last_seed:
                 node_data.mg1 = node_data.mg2
             else:
                 node_data.mg1 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set+[node_data.node], seed_set, self.r)
                 node_data.prev_best = cur_best
-                node_data.mg2 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set+[cur_best.node]+[node_data.node], seed_set+[cur_best.node], self.r)
+                """
+                # TODO: edit
+                if cur_best is None:
+                    node_data.mg2 = 0
+                else:
+                    node_data.mg2 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set+[cur_best.node]+[node_data.node], seed_set+[cur_best.node], self.r)
+                """
+                node_data.mg2 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set + [cur_best.node] + [node_data.node], seed_set + [cur_best.node], self.r)
             node_data.flag = len(seed_set)
             cur_best = cur_best if cur_best and cur_best.mg1 > node_data.mg1 else node_data
             Q[node_idx] = -node_data.mg1
