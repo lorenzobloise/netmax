@@ -28,9 +28,9 @@ class GeneralTests(unittest.TestCase):
         # Test network datatset
         df = pd.DataFrame()
         g = read_adjacency_matrix('../../data/network.txt')
-        algo = ['mcgreedy']
+        algo = ['celfpp', 'celf']
         for a in algo:
-            im = InfluenceMaximization(g, 'Agent_0', 10, alg=a, diff_model='ic', inf_prob='uniform', r=100)
+            im = InfluenceMaximization(g, 'Agent_0', 10, alg=a, diff_model='ic', inf_prob='uniform', r=1000)
             seed = im.run()
             spread = im.result['spread']
             execution_time = im.result['execution_time']

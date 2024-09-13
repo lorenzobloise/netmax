@@ -46,7 +46,7 @@ class CELF_PP(SimulationBasedAlgorithm):
 
     def __initialize_queues__(self, sim_graph, agents_copy):
         self.queues = {self.curr_agent_id: heapdict()}
-        for node in tqdm(sim_graph.nodes, desc="Inactive nodes"):
+        for node in tqdm(sim_graph.nodes, desc="Initializing queues"):
             node_data=CELF_PP.Node(node)
             node_data.mg1 = self.__do_simulation__(sim_graph, agents_copy,[node_data.node])
             node_data.prev_best = None if self.curr_agent_id not in self.curr_best else self.curr_best[self.curr_agent_id]
@@ -99,10 +99,10 @@ class CELF_PP(SimulationBasedAlgorithm):
         if seed_set is not None:
             old_seed_set = agents[self.curr_agent_id].seed
             agents[self.curr_agent_id].seed = seed_set
-        result: dict = cim.simulation(sim_graph, self.diff_model, agents, self.r)
+        spreads: dict = cim.simulation(sim_graph, self.diff_model, agents, self.r)
         if old_seed_set is not None:
             agents[self.curr_agent_id].seed = old_seed_set
-        spread_curr_agent = result[self.agents[self.curr_agent_id].name]
+        spread_curr_agent = spreads[self.agents[self.curr_agent_id].name]
         return spread_curr_agent
 
     def __do_simulation_delta__(self, sim_graph, agents, seed_1, seed_2):
@@ -130,12 +130,15 @@ class CELF_PP(SimulationBasedAlgorithm):
     def run(self):
         agents_copy = copy.deepcopy(self.agents)
         # If the queues are not initialized, initialize them, then do the first iteration pass of CELF++
+        # TODO: manage opinions by initializing different queues for each agents instead of merely copying
         if self.queues is None:
             self.__initialize_queues__(self.graph, agents_copy)
         # Other iterations
         progress_bar = tqdm(total=self.budget, desc='Agent ' + str(self.curr_agent_id) + ' has chosen the next seed with CELF++')
         for i in range(self.budget):
+            last_spread = agents_copy[self.curr_agent_id].spread
             seed_added = False
+            updated_spreads = None
             while not seed_added:
                 node_data, _ = self.__peek_top_element__()
                 if not node_data.mg2_already_computed:
@@ -143,6 +146,7 @@ class CELF_PP(SimulationBasedAlgorithm):
                     node_data.mg2_already_computed = True
                 if node_data.flag == len(agents_copy[self.curr_agent_id].seed):
                     agents_copy[self.curr_agent_id].seed.append(node_data.node)
+                    agents_copy[self.curr_agent_id].spread = node_data.mg1
                     self.__remove_element_from_the_queue__(node_data)
                     self.last_seed[self.curr_agent_id] = node_data
                     seed_added = True
@@ -166,4 +170,5 @@ class CELF_PP(SimulationBasedAlgorithm):
                     self.curr_best[self.curr_agent_id] = node_data
                 self.__update_element_in_the_queue__(node_data)
         result_seed_set = agents_copy[self.curr_agent_id].seed[:-self.budget] if self.budget > 1 else [agents_copy[self.curr_agent_id].seed[-1]]
-        return result_seed_set, agents_copy[self.curr_agent_id].spread
+        #return result_seed_set, agents_copy[self.curr_agent_id].spread
+        return result_seed_set, {a.name: a.spread for a in agents_copy}

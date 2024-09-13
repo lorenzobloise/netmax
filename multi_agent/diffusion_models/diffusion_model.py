@@ -1,8 +1,12 @@
+import logging
+
 class DiffusionModel:
 
     def __init__(self, endorsement_policy):
         self.endorsement_policy = endorsement_policy
         self.sim_graph = None
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.logger = logging.getLogger(__name__)
 
     def __copy__(self):
         result = DiffusionModel(self.endorsement_policy)

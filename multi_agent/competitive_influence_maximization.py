@@ -51,7 +51,8 @@ def contact_node(graph, node, agent: Agent):
 def manage_pending_nodes(graph, endorsement_policy, pending_nodes_list):
     newly_activated = []
     for node in pending_nodes_list:
-        chosen_agent = endorsement_policy.choose_agent(node, graph)
+        contacted_by = graph.nodes[node]['contacted_by']
+        chosen_agent = endorsement_policy.choose_agent(node, graph) if len(contacted_by) > 1 else next(iter(contacted_by))
         activate_node(graph, node, chosen_agent)
         newly_activated.append(node)
     return newly_activated
@@ -114,9 +115,16 @@ def simulation_old(graph, diff_model, agents, r=10000, community=None):
         spreads[agent_name] /= r
     return spreads
 
+def __log_simulation__(logger, i, r):
+    if i % (r//4)==0:
+        logger.info(f"Simulations: {(i / r) * 100}%")
+
 def simulation(graph, diff_model, agents, r=10000, community=None):
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
     spreads = dict()
-    for _ in (range(r)):
+    for i in (range(r)):
+        #__log_simulation__(logger, i, r)
         active_sets = diff_model.activate(graph, agents)
         if community is not None:
             active_sets = remove_nodes_not_in_community(community, active_sets)
@@ -263,25 +271,27 @@ class CompetitiveInfluenceMaximization:
         start_time = time.time()
         alg = self.alg(graph=self.graph, agents=self.agents, curr_agent_id=None, budget=1, diff_model=self.diff_model, r=self.r)
         self.logger.info("Starting the competitive influence maximization game")
+        round_counter = 0
         while not self.__game_over__():
-            self.logger.info("A round has started")
+            self.logger.info(f"Round {round_counter} has started")
             for agent in self.__get_agents_not_fulfilled__():
-                self.logger.info(f"Agent {agent.name} is playing")
+                self.logger.info(f"Agent {agent.name} (id: {agent.id}) is playing")
                 alg.set_curr_agent(agent.id)
                 alg.set_graph(self.graph)
-                partial_seed, new_spread = alg.run()
+                partial_seed, new_spreads = alg.run()
+                self.logger.info(f"The Spreads of agents {new_spreads}")
                 if len(partial_seed) == 0:
                     raise RuntimeError(
                         f"No more available nodes to add to the seed set of agent {agent.name}. Budget not fulfilled by {agent.budget - len(agent.seed)}")
                 for node in partial_seed:
-                    logger.info(f"Activating node {node} by agent {agent.name}")
+                    self.logger.info(f"Activating node {node} by agent {agent.name}")
                     activate_node(graph=self.graph, node=node, agent=agent)
-                    logger.info(f"Node {node} activated now have status {self.graph.nodes[node]['status']}")
-                logger.info(f"Spread of agent {agent.name} updated with {new_spread} after adding {partial_seed} nodes")
-                agent.spread = new_spread
+                for a in self.agents:
+                    a.spread = new_spreads[a.name]
+                self.logger.info(f"Spread of agent {agent.name} updated with {agent.spread} after adding node {partial_seed}")
                 agent.seed.extend(partial_seed)
                 self.logger.info(f"Seed set of agent {agent.name} updated with {partial_seed[0]} node")
-            self.logger.info("A round has ended")
+            round_counter += 1
         self.logger.info("Game over")
         execution_time = time.time() - start_time
         inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
