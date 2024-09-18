@@ -36,6 +36,7 @@ class CGINA(SimulationBasedAlgorithm):
             :param graph: The subgraph representing a community C_i.
             :return: The Shapley value of the community C_i.
         """
+
         communities = nx.community.louvain_communities(graph, weight='p')
         return sum([self.__community_contribution__(graph, c)*len(graph.nodes) for c in communities])
 
@@ -70,7 +71,7 @@ class CGINA(SimulationBasedAlgorithm):
                 # Choose the top key_nodes[c]*l nodes with the maximum bweight into topknodes
                 influential_nodes[i] = math.floor(key_nodes[i] - key_nodes[i]*l) # key_nodes[c]*l is the number of bridge nodes in the community c
             else:
-                # Choose all out nodes into topknodes
+                # Choose all out nodes into top k nodes
                 influential_nodes[i] = key_nodes[i] - out_nodes[i]
         while len(seed_set) < self.budget:
             marginal_gains = {}

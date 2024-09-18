@@ -15,7 +15,7 @@ class GeneralTests(unittest.TestCase):
         agents = []
         for i in range(num_agents):
             agent_name = 'Agent_' + str(i)
-            agent = Agent(agent_name, random.randint(10, 10))
+            agent = Agent(agent_name, random.randint(100, 100))
             agent.__setattr__('id', i)
             agents.append(agent)
         return agents
@@ -28,9 +28,9 @@ class GeneralTests(unittest.TestCase):
     def test_network(self):
         # Test Network
         df = pd.DataFrame()
-        g = read_adjacency_matrix('../../data/network.txt')
-        algo = ['celfpp', 'celf']
-        list_of_agents = self.__create_agents__(num_agents=1)
+        g = read_adjacency_matrix('../../data/BigTestData.txt')
+        algo = ['degdis', 'celfpp', 'celf']
+        list_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             cim_instance = cim.CompetitiveInfluenceMaximization(input_graph=g, agents=list_of_agents, alg=a,
                                                                 diff_model='ic', inf_prob=None, r=1000,

@@ -35,7 +35,7 @@ NetMax is a python library that provides the implementation of several algorithm
     [ ] Fix multi-agent diffusion models
     [X] Add multi-processing from the following link:
         https://stackoverflow.com/questions/78510868/python-threads-do-not-utilize-cpu-cores-fully
-    [ ] Parallelize the node exploration in simulation-based algorithms
+    [ ] Parallelize the node exploration in simulation-based algorithms (use "multiprocessing" python library)
 
 ## Ideas
     - Add a Configuration object to IM
@@ -49,8 +49,8 @@ NetMax is a python library that provides the implementation of several algorithm
         [ ] TIM+
         [ ] BKRIS
         [ ] SSA
-    - Add an opinion-based endorsement policy (maybe do not use it with opinion-based influence probability)
     - Add a graph visualization tool
+    - Study and add non-progressive and semi-progressive diffusion models
 
 ## Github links
     - https://github.com/snowgy/Influence_Maximization/blob/master/IMM.pdf (Paper)
