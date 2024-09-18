@@ -1,7 +1,6 @@
 from multi_agent.algorithms.algorithm import Algorithm
 import networkx as nx
 from multi_agent.agent import Agent
-import multi_agent.competitive_influence_maximization as cim
 
 class SimulationBasedAlgorithm(Algorithm):
     """
