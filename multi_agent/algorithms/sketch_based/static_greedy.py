@@ -28,7 +28,7 @@ class StaticGreedy(SketchBasedAlgorithm):
     def __init__(self, graph: nx.DiGraph, agents: list[Agent], curr_agent_id: int, budget, diff_model, r):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
         self.snapshots = None # List which contains the snapshots
-        self.marginal_gains = {a.id: {} for a in self.agents} # Dictionary of dictionaries (marginal gains) for each node and for each agent
+        self.marginal_gains = {} # Dictionary of marginal gains for each node
 
     def __generate_snapshot__(self):
         # 1) Sample each edge (u,v) from the graph according to its probability p(u,v)
@@ -38,7 +38,7 @@ class StaticGreedy(SketchBasedAlgorithm):
             if r < attr['p']:
                 sampled_edges.append((u, v))
         sim_graph = nx.DiGraph()
-        sim_graph.add_nodes_from([node for node in self.graph.nodes])
+        sim_graph.add_nodes_from(list(self.graph.nodes))
         sim_graph.add_edges_from(sampled_edges)
         # 2) For each node u, compute:
         # 2.1) The reached nodes R(G_i, u)
@@ -54,18 +54,11 @@ class StaticGreedy(SketchBasedAlgorithm):
             snapshot = StaticGreedy.Snapshot(sketch, reached_nodes, reached_from_nodes)
             self.snapshots.append(snapshot)
             for v in self.graph.nodes:
-                for a in self.agents:
-                    if v not in self.marginal_gains[a.id].keys():
-                        self.marginal_gains[a.id][v] = 0
-                    self.marginal_gains[a.id][v] += len(snapshot.reached_nodes[v])
+                self.marginal_gains[v] = self.marginal_gains.get(v, 0) + len(snapshot.reached_nodes[v])
 
     def __take_best_node__(self):
-        self.marginal_gains[self.curr_agent_id] = dict(sorted(self.marginal_gains[self.curr_agent_id].items(), key=lambda x: x[1]))
-        best_node, marg_gain = self.marginal_gains[self.curr_agent_id].popitem()
-        # Remove the best node from the other queues
-        for a in self.agents:
-            if best_node in self.marginal_gains[a.id].keys():
-                del self.marginal_gains[a.id][best_node]
+        self.marginal_gains = dict(sorted(self.marginal_gains.items(), key=lambda x: x[1]))
+        best_node, marg_gain = self.marginal_gains.popitem()
         return best_node, marg_gain
 
     def __discount_marginal_gains__(self, v):
@@ -74,12 +67,11 @@ class StaticGreedy(SketchBasedAlgorithm):
         shared by these nodes and v.
         """
         for snapshot in self.snapshots:
-            for w in snapshot.reached_from_nodes[v]:
-                for u in snapshot.reached_nodes[v]:
-                    if w in snapshot.reached_nodes[u]:
+            for w in snapshot.reached_nodes[v]:
+                for u in snapshot.reached_from_nodes[w]:
+                    if u != v:
                         snapshot.reached_nodes[u].remove(w)
-                    for a in self.agents:
-                        self.marginal_gains[a.id][u] -= 1
+                        self.marginal_gains[u] -= 1
 
     def run(self):
         # Generate the Monte Carlo snapshots
