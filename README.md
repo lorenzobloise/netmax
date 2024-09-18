@@ -28,7 +28,7 @@ NetMax is a python library that provides the implementation of several algorithm
         - The average marginal gain for the other agents
         - The average of the two previous
     [ ] Substitute tqdm with logger
-    [ ] Fix UBLF problem with singular matrixes
+    [ ] Fix UBLF and UBound problem with singular matrixes
     [ ] Define algorithms with a queue for each agent when using opinion-based dynamic influence probabilities
     [ ] Modify agents parameter inside competitive_influence_maximization.py
     [ ] Delete single-agent directory
