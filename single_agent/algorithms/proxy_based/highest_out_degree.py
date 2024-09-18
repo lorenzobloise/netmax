@@ -1,4 +1,5 @@
 from single_agent.algorithms.proxy_based.proxy_based import ProxyBasedAlgorithm
+import single_agent.influence_maximization as im
 
 class HighestOutDegree(ProxyBasedAlgorithm):
     """

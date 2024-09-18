@@ -1,4 +1,3 @@
-from venv import logger
 import networkx as nx
 from common import utils
 from multi_agent.agent import Agent
@@ -9,6 +8,7 @@ from common.influence_probabilities.influence_probability import InfluenceProbab
 import time
 import logging
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from tqdm import tqdm
 
 def activate_node(graph, node, agent: Agent):
     """
@@ -119,17 +119,19 @@ def __log_simulation__(logger, i, r):
     if i % (r//4)==0:
         logger.info(f"Simulations: {(i / r) * 100}%")
 
-def simulation(graph, diff_model, agents, r=10000, community=None):
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger(__name__)
+def simulation(graph, diff_model, agents, r=10000, community=None, verbose=False):
     spreads = dict()
-    for i in (range(r)):
-        #__log_simulation__(logger, i, r)
+    progress_bar = None
+    if verbose:
+        progress_bar = tqdm(total=r)
+    for _ in (range(r)):
         active_sets = diff_model.activate(graph, agents)
         if community is not None:
             active_sets = remove_nodes_not_in_community(community, active_sets)
         for agent_name in active_sets.keys():
             spreads[agent_name] = spreads.get(agent_name, 0) + len(active_sets[agent_name])
+        if verbose:
+            progress_bar.update()
     for agent_name in spreads.keys():
         spreads[agent_name] /= r
     return spreads
@@ -292,10 +294,11 @@ class CompetitiveInfluenceMaximization:
                 agent.seed.extend(partial_seed)
                 self.logger.info(f"Seed set of agent {agent.name} updated with {partial_seed[0]} node")
             round_counter += 1
-        self.logger.info("Game over")
+        self.logger.info(f"Game over")
+        self.logger.info(f"Starting the spreads estimation with {self.r} simulations")
         execution_time = time.time() - start_time
         inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
-        spreads = simulation(graph=self.graph, diff_model=self.diff_model, agents=self.agents, r=self.r)
+        spreads = simulation(graph=self.graph, diff_model=self.diff_model, agents=self.agents, r=self.r, verbose=True)
         for a in self.agents:
             a.seed = [inverse_mapping[s] for s in a.seed]
             a.spread = spreads[a.name]

@@ -136,14 +136,9 @@ class CELF_PP(SimulationBasedAlgorithm):
         # Other iterations
         progress_bar = tqdm(total=self.budget, desc='Agent ' + str(self.curr_agent_id) + ' has chosen the next seed with CELF++')
         for i in range(self.budget):
-            last_spread = agents_copy[self.curr_agent_id].spread
             seed_added = False
-            updated_spreads = None
             while not seed_added:
                 node_data, _ = self.__peek_top_element__()
-                if not node_data.mg2_already_computed:
-                    node_data.mg2 = self.__do_simulation__(self.graph, agents_copy, [node_data.node] + [self.__get_curr_best__().node])
-                    node_data.mg2_already_computed = True
                 if node_data.flag == len(agents_copy[self.curr_agent_id].seed):
                     agents_copy[self.curr_agent_id].seed.append(node_data.node)
                     agents_copy[self.curr_agent_id].spread = node_data.mg1
@@ -152,6 +147,9 @@ class CELF_PP(SimulationBasedAlgorithm):
                     seed_added = True
                     progress_bar.update(1)
                     continue
+                if not node_data.mg2_already_computed:
+                    node_data.mg2 = self.__do_simulation__(self.graph, agents_copy, [node_data.node] + [self.__get_curr_best__().node])
+                    node_data.mg2_already_computed = True
                 elif node_data.prev_best == self.last_seed[self.curr_agent_id]:
                     node_data.mg1 = node_data.mg2
                 else:
@@ -170,5 +168,4 @@ class CELF_PP(SimulationBasedAlgorithm):
                     self.curr_best[self.curr_agent_id] = node_data
                 self.__update_element_in_the_queue__(node_data)
         result_seed_set = agents_copy[self.curr_agent_id].seed[:-self.budget] if self.budget > 1 else [agents_copy[self.curr_agent_id].seed[-1]]
-        #return result_seed_set, agents_copy[self.curr_agent_id].spread
         return result_seed_set, {a.name: a.spread for a in agents_copy}

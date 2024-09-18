@@ -32,22 +32,15 @@ class CELF_PP(SimulationBasedAlgorithm):
         seed_set = []
         Q = heapdict() # Priority Queue based on marginal gain 1
         last_seed = None
-        cur_best = None
+        curr_best = None
         node_data_list = []
         # First iteration: Monte Carlo and store marginal gains
         for node in tqdm(sim_graph.nodes, desc="First Monte Carlo simulation"):
             node_data = CELF_PP.Node(node)
             node_data.mg1 = im.simulation(sim_graph, self.diff_model, self.agent, [node_data.node], self.r)
-            node_data.prev_best = cur_best
-            """
-            # TODO: remove mg2 computation
-            if cur_best and cur_best.node != node_data.node:
-                node_data.mg2 = im.simulation(sim_graph, self.diff_model, self.agent, [node_data.node] + [cur_best.node], self.r)
-            else:
-                node_data.mg2 = node_data.mg1
-            """
+            node_data.prev_best = curr_best
             node_data.flag = 0
-            cur_best = cur_best if cur_best and cur_best.mg1 > node_data.mg1 else node_data
+            curr_best = curr_best if curr_best and curr_best.mg1 > node_data.mg1 else node_data
             node_data_list.append(node_data)
             node_data.list_index = len(node_data_list) - 1
             Q[node_data.list_index] = -node_data.mg1
@@ -56,31 +49,22 @@ class CELF_PP(SimulationBasedAlgorithm):
         while len(seed_set) < self.budget:
             node_idx, _ = Q.peekitem()
             node_data = node_data_list[node_idx]
-            if not node_data.mg2_already_computed:
-                node_data.mg2 = im.simulation(sim_graph, self.diff_model, self.agent, [node_data.node] + [cur_best.node], self.r)
-                #node_data.mg2 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set + [cur_best.node] + [node_data.node], seed_set + [cur_best.node], self.r)
-                node_data.mg2_already_computed = True
             if node_data.flag == len(seed_set):
                 seed_set.append(node_data.node)
                 progress_bar.update(1)
                 del Q[node_idx]
                 last_seed = node_data
-                #cur_best = None # TODO: edit
                 continue
+            if not node_data.mg2_already_computed:
+                node_data.mg2 = im.simulation(sim_graph, self.diff_model, self.agent, [node_data.node] + [curr_best.node], self.r)
+                node_data.mg2_already_computed = True
             elif node_data.prev_best == last_seed:
                 node_data.mg1 = node_data.mg2
             else:
                 node_data.mg1 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set+[node_data.node], seed_set, self.r)
-                node_data.prev_best = cur_best
-                """
-                # TODO: edit
-                if cur_best is None:
-                    node_data.mg2 = 0
-                else:
-                    node_data.mg2 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set+[cur_best.node]+[node_data.node], seed_set+[cur_best.node], self.r)
-                """
-                node_data.mg2 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set + [cur_best.node] + [node_data.node], seed_set + [cur_best.node], self.r)
+                node_data.prev_best = curr_best
+                node_data.mg2 = im.simulation_delta(sim_graph, self.diff_model, self.agent, seed_set + [curr_best.node] + [node_data.node], seed_set + [curr_best.node], self.r)
             node_data.flag = len(seed_set)
-            cur_best = cur_best if cur_best and cur_best.mg1 > node_data.mg1 else node_data
+            curr_best = curr_best if curr_best and curr_best.mg1 > node_data.mg1 else node_data
             Q[node_idx] = -node_data.mg1
         return seed_set
