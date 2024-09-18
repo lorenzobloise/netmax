@@ -207,7 +207,7 @@ class CompetitiveInfluenceMaximization:
         # Instantiate the algorithm
         #self.alg = alg_class(self.graph, self.agents, diff_model_class, inf_prob_class, insert_prob, inv_edges)
         self.alg = alg_class
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger(__name__)
 
     def __check_params__(self, diff_model_name, alg_name, inf_prob_name, endorsement_policy_name):
@@ -295,9 +295,12 @@ class CompetitiveInfluenceMaximization:
                 self.logger.info(f"Seed set of agent {agent.name} updated with {partial_seed[0]} node")
             round_counter += 1
         self.logger.info(f"Game over")
+        inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
+        self.logger.info(f"Seed sets found:")
+        for a in self.agents:
+            self.logger.info(f"{a.name}: {[inverse_mapping[s] for s in a.seed]}")
         self.logger.info(f"Starting the spreads estimation with {self.r} simulations")
         execution_time = time.time() - start_time
-        inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
         spreads = simulation(graph=self.graph, diff_model=self.diff_model, agents=self.agents, r=self.r, verbose=True)
         for a in self.agents:
             a.seed = [inverse_mapping[s] for s in a.seed]

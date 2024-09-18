@@ -17,7 +17,7 @@ class IndependentCascade(DiffusionModel):
         result = IndependentCascade(self.endorsement_policy)
         if self.sim_graph is not None:
             result.sim_graph = self.sim_graph.copy()
-            for key, value in self.sim_graph.graph.items():  # Copy the graph's attributes
+            for key, value in self.sim_graph.graph.items(): # Copy the graph's attributes
                 result.sim_graph.graph[key] = value
         return result
 
@@ -26,7 +26,7 @@ class IndependentCascade(DiffusionModel):
 
     def __add_node__(self, graph, u):
         """
-        Add a node and its neighborhood to the simulation graph and copy its attributes from the original graph
+        Add a node to the simulation graph and copy its attributes from the original graph
         """
         dict_attr = graph.nodes(data=True)[u]
         self.sim_graph.add_node(u, **dict_attr)
@@ -85,9 +85,8 @@ class IndependentCascade(DiffusionModel):
             pending_nodes = []
             for u in newly_activated:
                 inactive_out_edges=[]
-                #inactive_out_edges = [(u, v, attr) for (u, v, attr) in graph.out_edges(u, data=True)
-                #                  if sim_graph.has_node(v) and not cim.is_active(v, sim_graph) else True]
                 for (_, v, attr) in graph.out_edges(u, data=True):
+                    # It's not the equivalent of doing an OR selection, in fact it's an exclusive OR operation
                     if not self.sim_graph.has_node(v):
                         inactive_out_edges.append((u, v, attr))
                     elif not cim.is_active(v, self.sim_graph):
