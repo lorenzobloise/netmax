@@ -28,6 +28,7 @@ class StaticGreedy(SketchBasedAlgorithm):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
         self.snapshots = None # List which contains the snapshots
         self.marginal_gains = {} # Dictionary of marginal gains for each node
+        self.R = 100
 
     def __generate_single_snapshot__(self):
         # 1) Sample each edge (u,v) from the graph according to its probability p(u,v)
@@ -41,7 +42,7 @@ class StaticGreedy(SketchBasedAlgorithm):
 
     def __produce_snapshots__(self):
         self.snapshots = []
-        for _ in tqdm(range(self.r), desc="Creating snapshots"):
+        for _ in tqdm(range(self.R), desc="Creating snapshots"):
             sketch, reached_nodes, reached_from_nodes = self.__generate_single_snapshot__()
             snapshot = StaticGreedy.Snapshot(sketch, reached_nodes, reached_from_nodes)
             self.snapshots.append(snapshot)
