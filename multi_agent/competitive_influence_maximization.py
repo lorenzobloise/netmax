@@ -3,7 +3,7 @@ from common import utils
 from multi_agent.agent import Agent
 from multi_agent.algorithms.algorithm import Algorithm
 from multi_agent.endorsement_policies.endorsement_policy import EndorsementPolicy
-from multi_agent.diffusion_models.diffusion_model import DiffusionModel
+from  multi_agent.diffusion_models.diffusion_model import DiffusionModel
 from common.influence_probabilities.influence_probability import InfluenceProbability
 import time
 import logging

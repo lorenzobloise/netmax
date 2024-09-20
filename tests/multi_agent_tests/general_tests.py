@@ -28,12 +28,12 @@ class GeneralTests(unittest.TestCase):
     def test_network(self):
         # Test Network
         df = pd.DataFrame()
-        g = read_adjacency_matrix('../../data/network.txt')
-        algo = ['static_greedy', 'celf', 'celfpp']
+        g = read_adjacency_matrix('../../data/BigTestData.txt')
+        algo = ['ris', 'static_greedy', 'celf']
         list_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             cim_instance = cim.CompetitiveInfluenceMaximization(input_graph=g, agents=list_of_agents, alg=a,
-                                                                diff_model='lt', inf_prob=None, r=100,
+                                                                diff_model='ic', inf_prob=None, r=100,
                                                                 insert_opinion=False, endorsement_policy='random')
             seed = cim_instance.run()
             spread = cim_instance.result['spread']
