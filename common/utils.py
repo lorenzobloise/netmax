@@ -1,4 +1,5 @@
 import networkx as nx
+import math
 
 def read_adjacency_matrix(input_path):
     """
@@ -15,6 +16,33 @@ def read_adjacency_matrix(input_path):
         start, end, weight = data_line.split()
         graph.add_edge(int(start), int(end), p=float(weight))
     return graph
+
+def process_graph_file(file_path):
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+    nodes = set()
+    num_edges = len(lines)
+    for line in lines:
+        node1, node2 = map(int, line.split())
+        nodes.add(node1)
+        nodes.add(node2)
+    num_nodes = len(nodes)
+    new_first_line = f"{num_nodes} {num_edges}\n"
+    with open(file_path, 'w') as f:
+        f.write(new_first_line)
+        f.writelines(lines)
+
+def __binomial_coefficient__(n, k):
+    C = [[-1 for _ in range(k+1)] for _ in range(n+1)]
+    for i in range(n+1):
+        for j in range(min(i, k+1)):
+            # Base cases
+            if j == 0 or j == i:
+                C[i][j] = 1
+            # Calculate value using previously stored values
+            else:
+                C[i][j] = C[i-1][j-1] + C[i-1][j]
+    return C[n][k]
 
 # TODO
 def read_gml(input_path):
