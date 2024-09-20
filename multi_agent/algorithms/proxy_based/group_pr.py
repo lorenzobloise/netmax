@@ -1,10 +1,6 @@
 import copy
-from turtledemo.penrose import inflatedart
-
 import networkx as nx
-import numpy as np
 from heapdict import heapdict
-
 from multi_agent.algorithms.proxy_based.proxy_based import ProxyBasedAlgorithm
 
 class Group_PR(ProxyBasedAlgorithm):

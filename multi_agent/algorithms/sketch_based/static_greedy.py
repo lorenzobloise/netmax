@@ -1,4 +1,4 @@
-import random
+from tqdm import tqdm
 from multi_agent.algorithms.sketch_based.sketch_based import SketchBasedAlgorithm
 import networkx as nx
 from multi_agent.agent import Agent
@@ -10,7 +10,6 @@ class StaticGreedy(SketchBasedAlgorithm):
     This method produces a number of Monte Carlo snapshots at the beginning, and use this same set of snapshots
     (thus, static) in all iterations, instead of producing a huge number of Monte Carlo simulations in every iteration.
     """
-
     name = 'static_greedy'
 
     class Snapshot(object):
@@ -30,27 +29,20 @@ class StaticGreedy(SketchBasedAlgorithm):
         self.snapshots = None # List which contains the snapshots
         self.marginal_gains = {} # Dictionary of marginal gains for each node
 
-    def __generate_snapshot__(self):
+    def __generate_single_snapshot__(self):
         # 1) Sample each edge (u,v) from the graph according to its probability p(u,v)
-        sampled_edges = []
-        for (u, v, attr) in self.graph.edges(data=True):
-            r = random.random()
-            if r < attr['p']:
-                sampled_edges.append((u, v))
-        sim_graph = nx.DiGraph()
-        sim_graph.add_nodes_from(list(self.graph.nodes))
-        sim_graph.add_edges_from(sampled_edges)
+        sketch = self.__generate_sketch__()
         # 2) For each node u, compute:
         # 2.1) The reached nodes R(G_i, u)
-        reached_nodes = {u: list(nx.descendants(sim_graph, u)) for u in sim_graph.nodes}
+        reached_nodes = {u: list(nx.descendants(sketch, u)) for u in sketch.nodes}
         # 2.2) The nodes from which u is reached U(G_i, u)
-        reached_from_nodes = {u: list(nx.ancestors(sim_graph, u)) for u in sim_graph.nodes}
-        return sim_graph, reached_nodes, reached_from_nodes
+        reached_from_nodes = {u: list(nx.ancestors(sketch, u)) for u in sketch.nodes}
+        return sketch, reached_nodes, reached_from_nodes
 
     def __produce_snapshots__(self):
         self.snapshots = []
-        for _ in range(self.r):
-            sketch, reached_nodes, reached_from_nodes = self.__generate_snapshot__()
+        for _ in tqdm(range(self.r), desc="Creating snapshots"):
+            sketch, reached_nodes, reached_from_nodes = self.__generate_single_snapshot__()
             snapshot = StaticGreedy.Snapshot(sketch, reached_nodes, reached_from_nodes)
             self.snapshots.append(snapshot)
             for v in self.graph.nodes:

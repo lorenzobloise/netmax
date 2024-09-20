@@ -24,25 +24,42 @@ class Triggering(DiffusionModel):
                     graph.nodes[v]['trigger_set'].append(u)
                     graph.nodes[u]['reverse_trigger_set'].append(v)
 
-    def activate(self, graph, agents):
-        """
-        :return: A dictionary with the agents as keys and the list of nodes activated by each agent as values
-        """
-        sim_graph = graph.copy()
+    def __activate_initial_nodes__(self, graph, agents):
+        active_set = set()
         for agent in agents:
-            for u in agent.seed:
-                cim.activate_node(sim_graph, u, agent)
-        active_set = cim.active_nodes(sim_graph)
+            for node in agent.seed:
+                if not self.sim_graph.has_node(node):
+                    self.__add_node__(graph, node)
+                cim.activate_node(self.sim_graph, node, agent)
+                self.__add_node_to_the_stack__(node)
+                active_set.add(node)
+        return list(active_set)
+
+
+    def activate(self, graph, agents):
+        if self.sim_graph is None:
+            self.__initialize_sim_graph__(graph, agents)
+        active_set = self.__activate_initial_nodes__(graph, agents)
         newly_activated = list(active_set)
-        while len(newly_activated) > 0:
-            # First phase: try to influence inactive nodes
-            # Each newly activated node tries to activate its inactive neighbors by contacting them
+        while len(newly_activated)>0:
+            pending_nodes = set()
             for u in newly_activated:
-                for v in sim_graph.nodes[u]['reverse_trigger_set']:
-                    if not cim.is_active(v, sim_graph):
-                        cim.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
-            # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
-            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_policy)
+                for v in self.sim_graph.nodes[u]['reverse_trigger_set']:
+                    if not self.sim_graph.has_node(v):
+                        self.__add_node__(graph, v)
+                        edge_attr = graph.get_edge_data(u, v)
+                        self.sim_graph.add_edge(u, v, **edge_attr)
+                        cim.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
+                        pending_nodes.add(v)
+                    elif not cim.is_active(v, self.sim_graph):
+                        if not self.sim_graph.has_edge(u, v):
+                            edge_attr = graph.get_edge_data(u, v)
+                            self.sim_graph.add_edge(u, v, **edge_attr)
+                        cim.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
+                        pending_nodes.add(v)
+            self.__extend_stack__(pending_nodes)
+            newly_activated = cim.manage_pending_nodes(self.sim_graph, self.endorsement_policy,list(pending_nodes))
             active_set.extend(newly_activated)
-        # Group the activated nodes by agent and return the result
-        return self.__group_by_agent__(sim_graph, active_set)
+        result = self.__group_by_agent__(self.sim_graph, active_set)
+        self.__reverse_operations__()
+        return result

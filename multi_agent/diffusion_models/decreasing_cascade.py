@@ -16,33 +16,55 @@ class DecreasingCascade(DiffusionModel):
         for node in graph.nodes:
             graph.nodes[node]['trials'] = 0
 
-    def activate(self, graph, agents):
-        """
-        :return: A dictionary with the agents as keys and the list of nodes activated by each agent as values
-        """
-        sim_graph = graph.copy()
+    def __initialize_sim_graph__(self, graph, agents):
+        super().__initialize_sim_graph__(graph, agents)
+        self.sim_graph.graph['stack_trials'] = set()  # Stack for dynamic probabilities
+
+    def __activate__initial_nodes__(self, graph, agents):
+        active_set = []
         for agent in agents:
             for u in agent.seed:
-                cim.activate_node(sim_graph, u, agent)
-                del sim_graph.nodes[u]['trials'] # Remove the trials attribute of the node to avoid memory waste
-        active_set = cim.active_nodes(sim_graph)
+                cim.activate_node(self.sim_graph, u, agent)
+                active_set.append(u)
+                self.__add_node_to_the_stack__(u)
+                if 'trials' in self.sim_graph.nodes[u]:
+                    del self.sim_graph.nodes[u]['trials']  # Remove the trials attribute of the node to avoid memory waste
+                    self.sim_graph.graph['stack_trials'].add(u)
+        return active_set
+
+    def __reverse_operations__(self):
+        """
+        This method empties the stack of the active nodes
+        """
+        super().__reverse_operations__()
+        stack_trials = self.sim_graph.graph['stack_trials']
+        while len(stack_trials) > 0:
+            node = stack_trials.pop()
+            self.sim_graph.nodes[node]['trials'] = 0
+
+    def activate(self, graph, agents):
+        if self.sim_graph is None:
+            self.__initialize_sim_graph__(graph, agents)
+        active_set = self.__activate__initial_nodes__(graph, agents)
         newly_activated = list(active_set)
         while len(newly_activated) > 0:
-            # First phase: try to influence inactive nodes
-            # Each newly activated node tries to activate its inactive neighbors by contacting them
+            pending_nodes = []
             for u in newly_activated:
-                inactive_out_edges = [(u, v, attr) for (u, v, attr) in sim_graph.out_edges(u, data=True) if
-                                      not cim.is_active(v, sim_graph)]
+                inactive_out_edges = self.__build_inactive_out_edges__(graph, u)
                 for (_, v, attr) in inactive_out_edges:
                     r = random.random()
-                    trials = sim_graph.nodes[u]['trials']
+                    trials = self.sim_graph.nodes[v]['trials']
+                    if trials == 1:
+                        self.sim_graph.graph['stack_trials'].add(v)
                     if r < attr['p'] * (1 / (0.1 * (trials ** 2) + 1)):
-                        cim.contact_node(sim_graph, v, sim_graph.nodes[u]['agent'])
+                        cim.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
+                        if v not in pending_nodes:
+                            pending_nodes.append(v)
                     else:
-                        sim_graph.nodes[u]['trials'] = trials + 1
-            # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
-            newly_activated = cim.manage_pending_nodes(sim_graph, self.endorsement_policy)
-            for u in newly_activated: del sim_graph.nodes[u]['trials'] # Remove the trials attribute of the node to avoid memory waste
+                        self.sim_graph.nodes[v]['trials'] = trials + 1
+            self.__extend_stack__(pending_nodes)
+            newly_activated = cim.manage_pending_nodes(self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
-        # Group the activated nodes by agent and return the result
-        return self.__group_by_agent__(sim_graph, active_set)
+        result = self.__group_by_agent__(self.sim_graph, active_set)
+        self.__reverse_operations__()
+        return result

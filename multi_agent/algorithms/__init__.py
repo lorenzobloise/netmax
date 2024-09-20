@@ -6,3 +6,4 @@ from .simulation_based.mcgreedy import MCGreedy
 from .simulation_based.celf import CELF
 from .simulation_based.celfpp import CELF_PP
 from .sketch_based.static_greedy import StaticGreedy
+from .sketch_based.ris import RIS
