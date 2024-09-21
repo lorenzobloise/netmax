@@ -22,9 +22,7 @@ class RIS(SketchBasedAlgorithm):
         self.rr_sets = None
         self.occurrences = None
         self.epsilon = 0.2
-        self.alpha = 2
-        self.l = 1
-        self.tau = self.sum_of_budgets * (self.n + self.m) * math.log(self.n / math.pow(self.epsilon, 3)) + self.alpha * self.l
+        self.tau = self.sum_of_budgets * (self.n + self.m) * math.log(self.n / math.pow(self.epsilon, 3))
 
     def __build_reverse_reachable_sets__(self):
         self.rr_sets = []

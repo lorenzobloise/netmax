@@ -74,6 +74,8 @@ def is_pending(node, graph):
 
 def remove_isolated_nodes(graph):
     isolated_nodes = list(nx.isolates(graph))
+    if len(isolated_nodes) == 0:
+        return {node: node for node in graph.nodes}
     graph.remove_nodes_from(isolated_nodes)
     mapping = {old_label: new_label for new_label, old_label in enumerate(graph.nodes)}
     nx.relabel_nodes(graph, mapping, copy=False)
@@ -183,7 +185,7 @@ class CompetitiveInfluenceMaximization:
         :param inv_edges: A boolean indicating whether to invert the edges of the graph.
         :param r: Number of simulations to execute. Default is 100.
         """
-        self.graph = input_graph.copy() # TODO
+        self.graph = input_graph.copy()
         self.agents = agents
         # Check if the graph is compatible
         budget = sum([agent.budget for agent in agents])
@@ -201,6 +203,7 @@ class CompetitiveInfluenceMaximization:
         self.insert_opinion = insert_opinion
         self.inv_edges = inv_edges
         self.mapping = self.__preprocess__()
+        self.inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
         self.result = None
         self.r = r
         self.diff_model.preprocess_data(self.graph)
@@ -296,14 +299,13 @@ class CompetitiveInfluenceMaximization:
             round_counter += 1
         self.logger.info(f"Game over")
         execution_time = time.time() - start_time
-        inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
         self.logger.info(f"Seed sets found:")
         for a in self.agents:
-            self.logger.info(f"{a.name}: {[inverse_mapping[s] for s in a.seed]}")
+            self.logger.info(f"{a.name}: {[self.inverse_mapping[s] for s in a.seed]}")
         self.logger.info(f"Starting the spreads estimation with {self.r} simulations")
         spreads = simulation(graph=self.graph, diff_model=self.diff_model, agents=self.agents, r=self.r, verbose=True)
         for a in self.agents:
-            a.seed = [inverse_mapping[s] for s in a.seed]
+            a.seed = [self.inverse_mapping[s] for s in a.seed]
             a.spread = spreads[a.name]
         self.result = {
             'seed': {a.name: a.seed for a in self.agents},
