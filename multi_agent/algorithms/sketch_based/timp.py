@@ -22,8 +22,7 @@ class TIMp(SketchBasedAlgorithm):
         self.kpt = None
         self.rr_sets = None
         self.occurrences = None
-        self.alpha = 2
-        self.l = 1 + self.alpha * (1 + math.log(3) / math.log(self.n))
+        self.l = 1
         self.epsilon = 0.2
         self.epsilon_prime = 5 * math.pow((self.l * (self.epsilon**2))/(self.sum_of_budgets + self.l), 1/3)
         self._lambda = (2 + self.epsilon_prime) * self.l * self.n * math.log(self.n) * math.pow(self.epsilon_prime, -2)

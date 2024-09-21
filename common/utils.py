@@ -1,5 +1,4 @@
 import networkx as nx
-import math
 
 def read_adjacency_matrix(input_path):
     """
@@ -9,9 +8,6 @@ def read_adjacency_matrix(input_path):
     graph = nx.DiGraph()
     with open(input_path, 'r') as f:
         data_lines = f.readlines()
-    node_num = int(data_lines[0].split()[0])
-    nodes = [i for i in range(node_num)]
-    graph.add_nodes_from(nodes)
     for data_line in data_lines[1:]:
         start, end, weight = data_line.split()
         graph.add_edge(int(start), int(end), p=float(weight))

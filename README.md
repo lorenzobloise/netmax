@@ -48,8 +48,8 @@ NetMax is a python library that provides the implementation of several algorithm
         [ ] PrunedMC
         [ ] SKIM
         [X] RIS
-        [ ] TIM
-        [ ] TIM+
+        [X] TIM
+        [X] TIM+
         [ ] BKRIS
         [ ] SSA
     - Add a graph visualization tool with Dash
