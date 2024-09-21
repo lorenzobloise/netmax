@@ -100,4 +100,5 @@ class LinearThreshold(DiffusionModel):
             for u in newly_activated:
                 self.__update_prob_sum__(graph, u, self.sim_graph.nodes[u]['agent'].name)
         result = self.__group_by_agent__(self.sim_graph, active_set)
+        self.__reverse_operations__()
         return result
