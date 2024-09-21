@@ -24,6 +24,8 @@ class DecreasingCascade(DiffusionModel):
         active_set = []
         for agent in agents:
             for u in agent.seed:
+                if u not in self.sim_graph.nodes:
+                    self.__add_node__(graph, u)
                 cim.activate_node(self.sim_graph, u, agent)
                 active_set.append(u)
                 self.__add_node_to_the_stack__(u)
