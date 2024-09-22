@@ -251,6 +251,9 @@ class CompetitiveInfluenceMaximization:
                 self.graph[source][target]['p'] = self.inf_prob.get_probability(self.graph, source, target)
         return mapping
 
+    def get_diff_model(self):
+        return self.diff_model
+
     def __budget_fulfilled__(self, agent):
         """
         Check if the budget of an agent is fulfilled.
