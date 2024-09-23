@@ -2,8 +2,8 @@ import unittest
 import random
 import pandas as pd
 from common.utils import read_adjacency_matrix
-import multi_agent.competitive_influence_maximization as cim
-from multi_agent.agent import Agent
+import competitive_influence_maximization as cim
+from agent import Agent
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)

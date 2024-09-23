@@ -27,11 +27,11 @@ NetMax is a python library that provides the implementation of several algorithm
         - The marginal gain for the current agent
         - The average marginal gain for the other agents
         - The average of the two previous
-    [ ] Substitute tqdm with logger
+    [ ] Clean up loggers and tqdms
     [ ] Fix UBLF and UBound problem with singular matrixes
     [ ] Define algorithms with a queue for each agent when using opinion-based dynamic influence probabilities
     [ ] Modify agents parameter inside competitive_influence_maximization.py
-    [ ] Delete single-agent directory
+    [X] Delete single-agent directory
     [X] Fix multi-agent diffusion models:
         [X] Independent Cascade
         [X] Linear Threshold
@@ -40,6 +40,7 @@ NetMax is a python library that provides the implementation of several algorithm
     [X] Add multi-processing from the following link:
         https://stackoverflow.com/questions/78510868/python-threads-do-not-utilize-cpu-cores-fully
     [ ] Parallelize the node exploration in simulation-based algorithms (use "multiprocessing" python library)
+    [X] Add a graph visualization tool with Dash
 
 ## Ideas
     - Implement the sketch-based algorithms:
@@ -52,5 +53,3 @@ NetMax is a python library that provides the implementation of several algorithm
         [X] TIM+
         [ ] BKRIS
         [ ] SSA
-    - Add a graph visualization tool with Dash
-    - Study and add non-progressive and semi-progressive diffusion models
