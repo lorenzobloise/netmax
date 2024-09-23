@@ -1,5 +1,5 @@
 from endorsement_policies.endorsement_policy import EndorsementPolicy
-import competitive_influence_maximization as cim
+import influence_maximization as im
 import networkx as nx
 
 class Similarity(EndorsementPolicy):
@@ -14,7 +14,7 @@ class Similarity(EndorsementPolicy):
         scores = dict()
         for neighbor in graph[node]:
             # Check if the neighbor is already activated
-            if cim.is_active(graph, neighbor):
+            if im.is_active(graph, neighbor):
                 # Compute similarity
                 agent = graph.nodes[neighbor]['agent']
                 scores[agent] = scores.get(agent, 0) + self.similarity[node][neighbor]

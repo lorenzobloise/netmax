@@ -1,8 +1,6 @@
 import copy
-
 from algorithms.proxy_based.proxy_based import ProxyBasedAlgorithm
 from heapdict import heapdict
-
 
 class DegDis(ProxyBasedAlgorithm):
     """

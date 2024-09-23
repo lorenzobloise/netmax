@@ -1,7 +1,7 @@
 from heapdict import heapdict
 from algorithms.simulation_based.simulation_based import SimulationBasedAlgorithm
 import copy
-import competitive_influence_maximization as cim
+import influence_maximization as im
 from tqdm import tqdm
 
 class CELF(SimulationBasedAlgorithm):
@@ -17,9 +17,9 @@ class CELF(SimulationBasedAlgorithm):
         :return: dictionary of marginal gains of each node sorted in descending order by marginal gain
         """
         self.queues = {agent.id: heapdict() for agent in agents}
-        for u in tqdm(cim.inactive_nodes(graph), desc="Choosing first node and initializing queues"):
+        for u in tqdm(im.inactive_nodes(graph), desc="Choosing first node and initializing queues"):
             agents[self.curr_agent_id].seed.append(u)
-            spreads = cim.simulation(graph=graph, diff_model=self.diff_model, agents=agents, r=self.r)
+            spreads = im.simulation(graph=graph, diff_model=self.diff_model, agents=agents, r=self.r)
             spread_value = spreads[self.agents[self.curr_agent_id].name]
             # TODO: manage opinions by initializing different queues for each agents instead of merely copying
             for a in agents:
@@ -65,7 +65,7 @@ class CELF(SimulationBasedAlgorithm):
         :return: marginal gain of node u
         """
         agents[self.curr_agent_id].seed = agents[self.curr_agent_id].seed + [u]
-        spreads = cim.simulation(graph, self.diff_model, agents, self.r)
+        spreads = im.simulation(graph, self.diff_model, agents, self.r)
         curr_marg_gain = spreads[self.agents[self.curr_agent_id].name] - last_spread
         agents[self.curr_agent_id].seed = agents[self.curr_agent_id].seed[:-1]
         return curr_marg_gain, spreads

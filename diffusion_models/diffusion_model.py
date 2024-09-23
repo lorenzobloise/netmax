@@ -1,5 +1,5 @@
 import logging
-import competitive_influence_maximization as cim
+import influence_maximization as im
 import networkx as nx
 
 class DiffusionModel:
@@ -48,7 +48,7 @@ class DiffusionModel:
         stack_active_nodes = self.sim_graph.graph['stack_active_nodes']
         while len(stack_active_nodes) > 0:
             node = stack_active_nodes.pop()
-            cim.deactivate_node(self.sim_graph, node)
+            im.deactivate_node(self.sim_graph, node)
 
     def __build_inactive_out_edges__(self, graph, u):
         inactive_out_edges = []
@@ -61,7 +61,7 @@ class DiffusionModel:
                 nodes_attr = graph.nodes(data=True)[v]
                 self.sim_graph.add_node(v, **nodes_attr)
                 self.sim_graph.add_edge(u, v, **attr)
-            elif not cim.is_active(v, self.sim_graph):
+            elif not im.is_active(v, self.sim_graph):
                 if not self.sim_graph.has_edge(u, v):
                     self.sim_graph.add_edge(u, v, **attr)
                 inactive_out_edges.append((u, v, attr))

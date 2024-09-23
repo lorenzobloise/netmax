@@ -7,7 +7,7 @@ import copy
 import numpy as np
 import logging
 from tqdm import tqdm
-
+from common.utils import __binomial_coefficient__
 
 class TIM(SketchBasedAlgorithm):
     """
@@ -26,9 +26,7 @@ class TIM(SketchBasedAlgorithm):
         self.occurrences = None
         self.l = 1
         self.epsilon = 0.2
-        self.epsilon_prime = 5 * math.pow((self.l * (self.epsilon ** 2)) / (self.sum_of_budgets + self.l), 1 / 3)
-        self._lambda = (2 + self.epsilon_prime) * self.l * self.n * math.log(self.n) * math.pow(self.epsilon_prime, -2)
-        #self._lambda = (8 + 2 * self.epsilon) * self.n * (self.l * math.log(self.n) + math.log(__binomial_coefficient__(self.n, self.sum_of_budgets)) + math.log(2)) * math.pow(self.epsilon, -2)
+        self._lambda = (8 + 2 * self.epsilon) * self.n * (self.l * math.log(self.n) + math.log(__binomial_coefficient__(self.n, self.sum_of_budgets)) + math.log(2)) * math.pow(self.epsilon, -2)
         self.theta = None
         self.logger = logging.getLogger()
 
@@ -78,7 +76,6 @@ class TIM(SketchBasedAlgorithm):
         return counter / len(self.rr_sets)
 
     def __node_selection__(self, agents):
-        self.logger.info("Node selection")
         top_node = max(self.occurrences.items(), key=lambda x: len(x[1]))[0]
         # Add it into the seed set
         agents[self.curr_agent_id].seed.append(top_node)

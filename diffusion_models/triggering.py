@@ -1,5 +1,5 @@
 from diffusion_models.diffusion_model import DiffusionModel
-import competitive_influence_maximization as cim
+import influence_maximization as im
 import random
 
 class Triggering(DiffusionModel):
@@ -30,7 +30,7 @@ class Triggering(DiffusionModel):
             for node in agent.seed:
                 if not self.sim_graph.has_node(node):
                     self.__add_node__(graph, node)
-                cim.activate_node(self.sim_graph, node, agent)
+                im.activate_node(self.sim_graph, node, agent)
                 self.__add_node_to_the_stack__(node)
                 active_set.add(node)
         return list(active_set)
@@ -49,16 +49,16 @@ class Triggering(DiffusionModel):
                         self.__add_node__(graph, v)
                         edge_attr = graph.get_edge_data(u, v)
                         self.sim_graph.add_edge(u, v, **edge_attr)
-                        cim.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
+                        im.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
                         pending_nodes.add(v)
-                    elif not cim.is_active(v, self.sim_graph):
+                    elif not im.is_active(v, self.sim_graph):
                         if not self.sim_graph.has_edge(u, v):
                             edge_attr = graph.get_edge_data(u, v)
                             self.sim_graph.add_edge(u, v, **edge_attr)
-                        cim.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
+                        im.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
                         pending_nodes.add(v)
             self.__extend_stack__(pending_nodes)
-            newly_activated = cim.manage_pending_nodes(self.sim_graph, self.endorsement_policy,list(pending_nodes))
+            newly_activated = im.manage_pending_nodes(self.sim_graph, self.endorsement_policy, list(pending_nodes))
             active_set.extend(newly_activated)
         result = self.__group_by_agent__(self.sim_graph, active_set)
         self.__reverse_operations__()

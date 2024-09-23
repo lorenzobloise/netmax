@@ -1,6 +1,6 @@
 from diffusion_models.diffusion_model import DiffusionModel
 import random
-import competitive_influence_maximization as cim
+import influence_maximization as im
 
 class LinearThreshold(DiffusionModel):
     """
@@ -48,7 +48,7 @@ class LinearThreshold(DiffusionModel):
                 if len(self.sim_graph.nodes[v]['prob_sum']) == 1:
                     # equals to 1 if is the first time that the node is reached by someone
                     self.__add_node_to_the_stack_prob_sum__(v)
-            elif not cim.is_active(v, self.sim_graph):
+            elif not im.is_active(v, self.sim_graph):
                 self.sim_graph.nodes[v]['prob_sum'][agent_name] = self.sim_graph.nodes[v]['prob_sum'].get(agent_name, 0) + attr['p']
                 if len(graph.nodes[v]['prob_sum']) == 1:
                     # equals to 1 if is the first time that the node is reached by someone
@@ -65,7 +65,7 @@ class LinearThreshold(DiffusionModel):
             for u in agent.seed:
                 if not self.sim_graph.has_node(u):
                     self.__add_node__(graph, u)
-                cim.activate_node(self.sim_graph, u, agent)
+                im.activate_node(self.sim_graph, u, agent)
                 self.__add_node_to_the_stack__(u)
                 self.__update_prob_sum__(graph, u, agent.name)
 
@@ -81,7 +81,7 @@ class LinearThreshold(DiffusionModel):
         if self.sim_graph is None:
             self.__initialize_sim_graph__(graph,agents)
         self.__activate_nodes_in_seed_sets__(graph,agents)
-        active_set = cim.active_nodes(self.sim_graph)
+        active_set = im.active_nodes(self.sim_graph)
         newly_activated = list(active_set)
         while len(newly_activated)>0:
             pending_nodes = []
@@ -90,12 +90,12 @@ class LinearThreshold(DiffusionModel):
                 inactive_out_edges = self.__build_inactive_out_edges__(graph, u)
                 for _, v, attr in inactive_out_edges:
                     if self.sim_graph.nodes[v]['prob_sum'][curr_agent_name] >= self.sim_graph.nodes[v]['threshold']:
-                        cim.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
+                        im.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
                         if v not in pending_nodes:
                             pending_nodes.append(v)
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
             self.__extend_stack__(pending_nodes)
-            newly_activated = cim.manage_pending_nodes(self.sim_graph, self.endorsement_policy, pending_nodes)
+            newly_activated = im.manage_pending_nodes(self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
             for u in newly_activated:
                 self.__update_prob_sum__(graph, u, self.sim_graph.nodes[u]['agent'].name)

@@ -1,5 +1,5 @@
 from endorsement_policies.endorsement_policy import EndorsementPolicy
-import competitive_influence_maximization as cim
+import influence_maximization as im
 import networkx as nx
 
 class Community(EndorsementPolicy):
@@ -20,7 +20,7 @@ class Community(EndorsementPolicy):
         community = self.__find_community__(node)
         scores = dict()
         for u in community:
-            if cim.is_active(graph, u):
+            if im.is_active(graph, u):
                 agent = graph.nodes[u]['agent']
                 scores[agent] = scores.get(agent, 0) + 1
         return max(scores, key=scores.get)

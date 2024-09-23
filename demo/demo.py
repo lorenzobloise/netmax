@@ -1,4 +1,4 @@
-from demo.Server import Server
+from server import Server
 
 # Run the app
 if __name__ == '__main__':
