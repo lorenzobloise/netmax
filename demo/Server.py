@@ -2,11 +2,12 @@ from dash import Dash, dcc, html, Input, Output, callback_context
 
 import plotly.graph_objs as go
 from common.utils import read_adjacency_matrix
-from multi_agent.agent import Agent
-import multi_agent.competitive_influence_maximization as cim
+from agent import Agent
+import competitive_influence_maximization as cim
 import random
 
 class Server:
+
     def __init__(self, input_graph):
         self.app = Dash(__name__)
         self.agents = self.__initialize_agents__()
@@ -19,23 +20,15 @@ class Server:
         self.fig = self.__initialize_figure__()
         self.app.layout = self.__initialize_layout__()
 
-
-
     def __initialize_layout__(self):
         return html.Div(style={'height': '100vh', 'width': '100vw'}, children=[
-            html.H1(children='NetMax Demo'),
-
             dcc.Graph(
                 id='example-graph',
                 figure=self.fig,
                 style={'height': '100%', 'width': '100%'}
             ),
-
             html.Button('Start Game', id='start-game-button', n_clicks=0),
-
             html.Button('Start Simulation', id='start-simulation-button', n_clicks=0)
-
-
         ])
 
     def __initialize_agents__(self):
@@ -51,7 +44,7 @@ class Server:
         fig = go.Figure(data=[self.node_trace, self.edge_trace],
                         layout=go.Layout(
                             title={
-                                'text': '<b>NetMax SCEMO</b>',
+                                'text': '<b>NetMax Demo</b>',
                                 'x': 0.5,
                                 'xanchor': 'center'
                             },
@@ -70,6 +63,7 @@ class Server:
         for node in self.G.nodes():
             pos[node] = (random.uniform(0, space_x), random.uniform(0, space_y))
         return space_x, space_y, pos
+
     def __initialize_traces__(self):
         edge_x = []
         edge_y = []
@@ -82,30 +76,22 @@ class Server:
             edge_y.append(y0)
             edge_y.append(y1)
             edge_y.append(None)
-
         node_x = []
         node_y = []
         for node in self.G.nodes():
             x, y = self.pos[node]
             node_x.append(x)
             node_y.append(y)
-
-        node_adjacencies = []
-        node_text = []
-        for node, adjacencies in enumerate(self.G.adjacency()):
-            node_text.append('# of connections: ' + str(len(adjacencies[1])))
-
         edge_trace = go.Scatter(
             x=edge_x, y=edge_y,
             line=dict(width=0.5, color='#888'),
             hoverinfo='none',
             mode='lines')
-
         node_trace = go.Scatter(
             x=node_x, y=node_y,
             mode='markers',
             hoverinfo='text',
-            text=node_text,
+            text=[],
             marker=dict(
                 showscale=False,
                 # colorscale options
@@ -113,7 +99,7 @@ class Server:
                 # 'Reds' | 'Blues' | 'Picnic' | 'Rainbow' | 'Portland' | 'Jet' |
                 # 'Hot' | 'Blackbody' | 'Earth' | 'Electric' | 'Viridis' |
                 color=['#CCCCCC' for _ in range(len(self.G.nodes))],
-                size=10,
+                size=25,
                 colorbar=dict(
                     thickness=15,
                     title='Node Connections',
@@ -123,13 +109,11 @@ class Server:
                 line_width=2))
         return node_trace, edge_trace
 
-
     def dispatcher_callback(self,n_clicks_game,n_clicks_simulation):
         ctx = callback_context
         if not ctx.triggered:
             return self.fig
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
         if button_id == 'start-game-button':
             return self.start_game(n_clicks_game)
         elif button_id == 'start-simulation-button' :
@@ -139,8 +123,6 @@ class Server:
 
     def clear_graph(self):
         self.node_trace.marker.color = ['#CCCCCC' for _ in range(len(self.G.nodes))]
-
-
 
     def start_game(self, n_clicks):
         if(n_clicks==1):
@@ -156,13 +138,11 @@ class Server:
         self.fig= self.__update_figure__(activates_nodes)
         return self.fig
 
-
     def __update_figure__(self,seed_set_of_agents):
         color={"Agent_0":'red',"Agent_1":'blue'}
         for agent_name,set in seed_set_of_agents.items():
             active_nodes = set
             new_colors = tuple(color[agent_name] if i in active_nodes else self.node_trace.marker.color[i] for i in range(len(self.G.nodes)))
-            print(new_colors)
             self.node_trace.marker.color = new_colors
         fig = go.Figure(data=[self.node_trace, self.edge_trace],
                         layout=go.Layout(
@@ -179,7 +159,6 @@ class Server:
                             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                         )
         return fig
-
 
     def run(self):
         self.app.callback(
