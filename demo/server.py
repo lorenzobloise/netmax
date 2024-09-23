@@ -1,20 +1,20 @@
 from dash import Dash, dcc, html, Input, Output, callback_context
-
 import plotly.graph_objs as go
 from common.utils import read_adjacency_matrix
 from agent import Agent
-import competitive_influence_maximization as cim
+import influence_maximization as im
 import random
 
 class Server:
 
     def __init__(self, input_graph):
         self.app = Dash(__name__)
-        self.agents = self.__initialize_agents__()
-        self.G= read_adjacency_matrix('../data/network.txt')
-        self.cim_instance  = cim.CompetitiveInfluenceMaximization(input_graph=self.G, agents=self.agents, alg='tim',
-                                                                diff_model='ic', inf_prob=None, r=100,
-                                                                insert_opinion=False, endorsement_policy='random')
+        dict_of_agents = self.__initialize_agents__()
+        self.G = read_adjacency_matrix('../data/network.txt')
+        self.im_instance  = im.InfluenceMaximization(input_graph=self.G, agents=dict_of_agents, alg='tim',
+                                                     diff_model='ic', inf_prob=None, r=100,
+                                                     insert_opinion=False, endorsement_policy='random')
+        self.agents=self.im_instance.get_agents()
         self.space_x, self.space_y, self.pos= self.__initialize_space__()
         self.node_trace, self.edge_trace = self.__initialize_traces__()
         self.fig = self.__initialize_figure__()
@@ -32,12 +32,11 @@ class Server:
         ])
 
     def __initialize_agents__(self):
-        agents = []
+        agents = {}
         for i in range(2):
             agent_name = 'Agent_' + str(i)
-            agent = Agent(agent_name, random.randint(10, 10))
-            agent.__setattr__('id', i)
-            agents.append(agent)
+            budget = random.randint(10, 10)
+            agents[agent_name]=budget
         return agents
 
     def __initialize_figure__(self):
@@ -126,14 +125,14 @@ class Server:
 
     def start_game(self, n_clicks):
         if(n_clicks==1):
-            seed=self.cim_instance.run()
+            seed=self.im_instance.run()
             print(seed)
             self.fig=self.__update_figure__(seed)
             return self.fig
         return self.fig
 
     def start_simulation(self, n_clicks):
-        diff_model=self.cim_instance.get_diff_model()
+        diff_model=self.im_instance.get_diff_model()
         activates_nodes=diff_model.activate(self.G,self.agents)
         self.fig= self.__update_figure__(activates_nodes)
         return self.fig

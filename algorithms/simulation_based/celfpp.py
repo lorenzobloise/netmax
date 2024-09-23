@@ -1,7 +1,7 @@
 import copy
 from algorithms.simulation_based.simulation_based import SimulationBasedAlgorithm
 from heapdict import heapdict
-import competitive_influence_maximization as cim
+import influence_maximization as im
 from tqdm import tqdm
 
 class CELF_PP(SimulationBasedAlgorithm):
@@ -99,7 +99,7 @@ class CELF_PP(SimulationBasedAlgorithm):
         if seed_set is not None:
             old_seed_set = agents[self.curr_agent_id].seed
             agents[self.curr_agent_id].seed = seed_set
-        spreads: dict = cim.simulation(sim_graph, self.diff_model, agents, self.r)
+        spreads: dict = im.simulation(sim_graph, self.diff_model, agents, self.r)
         if old_seed_set is not None:
             agents[self.curr_agent_id].seed = old_seed_set
         spread_curr_agent = spreads[self.agents[self.curr_agent_id].name]
@@ -110,7 +110,7 @@ class CELF_PP(SimulationBasedAlgorithm):
         Run the simulation for the current agent (the agent that is currently running the algorithm)
         :return: the spread of the current agent
         """
-        result: dict = cim.simulation_delta(sim_graph, self.diff_model, agents, self.curr_agent_id, seed_1, seed_2, self.r)
+        result: dict = im.simulation_delta(sim_graph, self.diff_model, agents, self.curr_agent_id, seed_1, seed_2, self.r)
         spread_curr_agent = result[self.agents[self.curr_agent_id].name]
         return spread_curr_agent
 
@@ -134,7 +134,7 @@ class CELF_PP(SimulationBasedAlgorithm):
         if self.queues is None:
             self.__initialize_queues__(self.graph, agents_copy)
         # Other iterations
-        progress_bar = tqdm(total=self.budget, desc='Agent ' + str(self.curr_agent_id) + ' has chosen the next seed with CELF++')
+        progress_bar = tqdm(total=self.budget, desc='Choosing the next node')
         for i in range(self.budget):
             seed_added = False
             while not seed_added:

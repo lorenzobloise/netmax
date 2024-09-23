@@ -2,12 +2,12 @@ import copy
 
 class Agent(object):
 
-    def __init__(self, name: str, budget: int):
+    def __init__(self, name: str, budget: int, id: int = -1):
         self.name: str = name
         self.budget: int = budget
         self.seed: [int] = []
         self.spread = 0
-        self.id: int = -1
+        self.id: int = id
 
     def __deepcopy__(self, memodict={}):
         new_agent = Agent(self.name, self.budget)

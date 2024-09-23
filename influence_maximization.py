@@ -7,7 +7,6 @@ from diffusion_models.diffusion_model import DiffusionModel
 from common.influence_probabilities.influence_probability import InfluenceProbability
 import time
 import logging
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 
 def activate_node(graph, node, agent: Agent):
@@ -100,32 +99,11 @@ def concurrent_simulation(graph, agents, diff_model, r):
     result = spreads
     return result
 
-def simulation_old(graph, diff_model, agents, r=10000, community=None):
-    spreads = dict()
-    num_threads = 8
-    with ProcessPoolExecutor() as exe:
-        futures = []
-        for i in range(num_threads):
-            srange = int((i + 1) * r / num_threads)-int(i * r / num_threads)
-            future = exe.submit(concurrent_simulation, graph, agents, diff_model.__copy__(), srange)
-            futures.append(future)
-        for f in as_completed(futures):
-            result = f.result()
-            for agent_name in result.keys():
-                spreads[agent_name] = spreads.get(agent_name, 0) + result[agent_name]
-    for agent_name in spreads.keys():
-        spreads[agent_name] /= r
-    return spreads
-
-def __log_simulation__(logger, i, r):
-    if i % (r//4)==0:
-        logger.info(f"Simulations: {(i / r) * 100}%")
-
 def simulation(graph, diff_model, agents, r=10000, community=None, verbose=False):
     spreads = dict()
     progress_bar = None
     if verbose:
-        progress_bar = tqdm(total=r)
+        progress_bar = tqdm(total=r, desc="Simulations")
     for _ in (range(r)):
         active_sets = diff_model.activate(graph, agents)
         if community is not None:
@@ -168,15 +146,15 @@ def simulation_delta(graph, diff_model, agents, curr_agent_id, seed1, seed2, r=1
         spreads[agent_name] = spreads[agent_name] / r
     return spreads
 
-class CompetitiveInfluenceMaximization:
+class InfluenceMaximization:
 
-    def __init__(self, input_graph: nx.DiGraph, agents: list[Agent],
+    def __init__(self, input_graph: nx.DiGraph, agents: dict,
                  alg: str, diff_model, inf_prob: str = None, endorsement_policy: str = 'random',
-                 insert_opinion: bool = False, inv_edges: bool = False, r: int = 100):
+                 insert_opinion: bool = False, inv_edges: bool = False, r: int = 100, verbose: bool = False):
         """
-        Create an instance of the CompetitiveInfluenceMaximization class.
+        Create an instance of the InfluenceMaximization class.
         :param input_graph: A directed graph representing the social network.
-        :param agents: A list of Agent instances.
+        :param agents: A dictionary where the key is the agent name and the value is his budget.
         :param alg: The algorithm to use for influence maximization.
         :param diff_model: The diffusion model to use.
         :param inf_prob: Probability distribution to generate (if needed) the probabilities of influence between nodes. The framework implements different probability distributions, default is None.
@@ -184,14 +162,11 @@ class CompetitiveInfluenceMaximization:
         :param insert_opinion: True if the nodes do not contain an information about their opinion on the agents, False otherwise or if the opinion is not used.
         :param inv_edges: A boolean indicating whether to invert the edges of the graph.
         :param r: Number of simulations to execute. Default is 100.
+        :param verbose: Set the logging level to INFO.
         """
         self.graph = input_graph.copy()
-        self.agents = agents
-        # Check if the graph is compatible
-        budget = sum([agent.budget for agent in agents])
-        n_nodes = len(self.graph.nodes)
-        if sum([agent.budget for agent in agents]) > len(self.graph.nodes):
-            raise ValueError(f"The budget ({budget}) exceeds the number of nodes in the graph ({n_nodes}) by {budget - n_nodes}")
+        self.agents = [Agent(list(agents.keys())[idx], list(agents.values())[idx], idx) for idx in range(len(agents))]
+        self.verbose = verbose
         # Check and set the diffusion model, the algorithm and the influence probabilities
         diff_model_class, alg_class, inf_prob_class, endorsement_policy_class = self.__check_params__(diff_model, alg, inf_prob, endorsement_policy)
         self.inf_prob = None if inf_prob_class is None else inf_prob_class()
@@ -202,7 +177,14 @@ class CompetitiveInfluenceMaximization:
         # Set the parameters
         self.insert_opinion = insert_opinion
         self.inv_edges = inv_edges
+        # Pre-process the graph, removing isolated nodes that do not contribute to influence diffusion process
         self.mapping = self.__preprocess__()
+        # Check if the graph is compatible (the sum of the budgets must not exceed the number of nodes in the graph)
+        budget = sum([agent.budget for agent in self.agents])
+        n_nodes = len(self.graph.nodes)
+        if sum([agent.budget for agent in self.agents]) > len(self.graph.nodes):
+            raise ValueError(
+                f"The budget ({budget}) exceeds the number of nodes in the graph ({n_nodes}) by {budget - n_nodes}")
         self.inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
         self.result = None
         self.r = r
@@ -210,8 +192,11 @@ class CompetitiveInfluenceMaximization:
         # Instantiate the algorithm
         #self.alg = alg_class(self.graph, self.agents, diff_model_class, inf_prob_class, insert_prob, inv_edges)
         self.alg = alg_class
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %msg')
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        if not self.verbose:
+            self.logger.propagate = False
 
     def __check_params__(self, diff_model_name, alg_name, inf_prob_name, endorsement_policy_name):
         """
@@ -254,6 +239,9 @@ class CompetitiveInfluenceMaximization:
     def get_diff_model(self):
         return self.diff_model
 
+    def get_agents(self):
+        return self.agents
+
     def __budget_fulfilled__(self, agent):
         """
         Check if the budget of an agent is fulfilled.
@@ -278,7 +266,7 @@ class CompetitiveInfluenceMaximization:
     def run(self):
         start_time = time.time()
         alg = self.alg(graph=self.graph, agents=self.agents, curr_agent_id=None, budget=1, diff_model=self.diff_model, r=self.r)
-        self.logger.info("Starting the competitive influence maximization game")
+        self.logger.info(f"Starting influence maximization process with algorithm {alg.__class__.__name__}")
         round_counter = 0
         while not self.__game_over__():
             self.logger.info(f"Round {round_counter} has started")
@@ -287,18 +275,14 @@ class CompetitiveInfluenceMaximization:
                 alg.set_curr_agent(agent.id)
                 alg.set_graph(self.graph)
                 partial_seed, new_spreads = alg.run()
-                self.logger.info(f"The Spreads of agents {new_spreads}")
-                if len(partial_seed) == 0:
-                    raise RuntimeError(
-                        f"No more available nodes to add to the seed set of agent {agent.name}. Budget not fulfilled by {agent.budget - len(agent.seed)}")
                 for node in partial_seed:
-                    self.logger.info(f"Activating node {node} by agent {agent.name}")
+                    self.logger.debug(f"Activating node {node} by agent {agent.name}")
                     activate_node(graph=self.graph, node=node, agent=agent)
                 for a in self.agents:
                     a.spread = new_spreads[a.name]
-                self.logger.info(f"Spread of agent {agent.name} updated with {agent.spread} after adding node {partial_seed}")
+                self.logger.debug(f"Spread of agent {agent.name} updated with {agent.spread}")
                 agent.seed.extend(partial_seed)
-                self.logger.info(f"Seed set of agent {agent.name} updated with {partial_seed[0]} node")
+                self.logger.debug(f"Seed set of agent {agent.name} updated with {partial_seed[0]} node")
             round_counter += 1
         self.logger.info(f"Game over")
         execution_time = time.time() - start_time

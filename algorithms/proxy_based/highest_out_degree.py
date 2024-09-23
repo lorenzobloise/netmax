@@ -1,6 +1,6 @@
 from networkx import DiGraph
 from algorithms.proxy_based.proxy_based import ProxyBasedAlgorithm
-import competitive_influence_maximization as cim
+import influence_maximization as im
 
 class HighestOutDegree(ProxyBasedAlgorithm):
     """
@@ -16,7 +16,7 @@ class HighestOutDegree(ProxyBasedAlgorithm):
 
     def run(self):
         if self.out_deg_ranking is None:
-            self.out_deg_ranking = sorted(cim.inactive_nodes(self.graph), key=lambda node: self.graph.out_degree(node))
+            self.out_deg_ranking = sorted(im.inactive_nodes(self.graph), key=lambda node: self.graph.out_degree(node))
         seed_set = []
         for _ in range(self.budget):
             seed_set.append(self.out_deg_ranking.pop())

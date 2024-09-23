@@ -11,7 +11,12 @@ NetMax is a python library that provides the implementation of several algorithm
         [X] Create "simulation_based.py" with the code inside "algorithms.py"
         [X] Create "proxy_based.py" with the code inside "heuristics.py"
     [X] Implement Decreasing Cascade Diffusion Model
+    [ ] Implement the simulation-based algorithms:
+        [ ] UBLF
+        [ ] CGA
     [ ] Implement the proxy-based algorithms:
+        [ ] UBound
+        [ ] SimPath
         [ ] IRIE
         [ ] SPIN
         [ ] IMRank
@@ -21,16 +26,26 @@ NetMax is a python library that provides the implementation of several algorithm
         [ ] PMIA
         [ ] IPA
         [ ] LDAG
+    [ ] Implement the sketch-based algorithms:
+        [ ] NewGreIC
+        [X] StaticGreedy
+        [ ] PrunedMC
+        [ ] SKIM
+        [X] RIS
+        [X] TIM
+        [X] TIM+
+        [ ] BKRIS
+        [ ] SSA
     [X] Add partial seed set to algorithms
     [X] Write a simulation method for competitive IM
     [ ] Define a score for each node computing:
         - The marginal gain for the current agent
         - The average marginal gain for the other agents
         - The average of the two previous
-    [ ] Clean up loggers and tqdms
+    [X] Clean up loggers and tqdms
     [ ] Fix UBLF and UBound problem with singular matrixes
-    [ ] Define algorithms with a queue for each agent when using opinion-based dynamic influence probabilities
-    [ ] Modify agents parameter inside competitive_influence_maximization.py
+    [ ] Deal with different queues in CELF and CELF++ when using opinion-based dynamic influence probabilities
+    [X] Modify agents parameter inside influence_maximization.py
     [X] Delete single-agent directory
     [X] Fix multi-agent diffusion models:
         [X] Independent Cascade
@@ -41,15 +56,3 @@ NetMax is a python library that provides the implementation of several algorithm
         https://stackoverflow.com/questions/78510868/python-threads-do-not-utilize-cpu-cores-fully
     [ ] Parallelize the node exploration in simulation-based algorithms (use "multiprocessing" python library)
     [X] Add a graph visualization tool with Dash
-
-## Ideas
-    - Implement the sketch-based algorithms:
-        [ ] NewGreIC
-        [X] StaticGreedy
-        [ ] PrunedMC
-        [ ] SKIM
-        [X] RIS
-        [X] TIM
-        [X] TIM+
-        [ ] BKRIS
-        [ ] SSA

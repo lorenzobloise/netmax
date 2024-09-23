@@ -102,7 +102,6 @@ class TIMp(SketchBasedAlgorithm):
         return max(self.kpt, kpt_prime)
 
     def __node_selection__(self, agents):
-        self.logger.info("Node selection")
         top_node = max(self.occurrences.items(), key=lambda x: len(x[1]))[0]
         # Add it into the seed set
         agents[self.curr_agent_id].seed.append(top_node)

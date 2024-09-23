@@ -1,5 +1,5 @@
 from endorsement_policies.endorsement_policy import EndorsementPolicy
-import competitive_influence_maximization as cim
+import influence_maximization as im
 
 class Voting(EndorsementPolicy):
 
@@ -12,7 +12,7 @@ class Voting(EndorsementPolicy):
         voting = dict()
         for neighbor in graph[node]:
             # Check if the neighbor is already activated
-            if cim.is_active(graph, neighbor):
+            if im.is_active(graph, neighbor):
                 agent = graph.nodes[neighbor]['agent']
                 voting[agent] = voting.get(agent, 0) + 1
         # Choose the agent with the most votes
