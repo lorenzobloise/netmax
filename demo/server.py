@@ -1,7 +1,6 @@
 from dash import Dash, dcc, html, Input, Output, callback_context
 import plotly.graph_objs as go
 from common.utils import read_adjacency_matrix
-from agent import Agent
 import influence_maximization as im
 import random
 
