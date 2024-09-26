@@ -2,6 +2,22 @@
 
 NetMax is a python library that provides the implementation of several algorithms for the problem of **Influence Maximization in Social Networks**, originally formulated in "Maximizing the Spread of Influence through a Social Network" (Kempe, Kleinberg and Tardos, 2003). NetMax is built upon NetworkX, a popular python library for working with graphs. It also addresses the problem of Competitive Influence Maximization, as an extensive-form strategic game setting in which multiple entities try to maximize their own influence across the network while minimizing the others'.
 
+Table of Contents:
+
+- [NetMax - Influence Maximization in Social Networks](#netmax---influence-maximization-in-social-networks)
+  - [Requirements](#requirements)
+  - [Overview](#overview)
+    - [Algorithms](#algorithms)
+      - [Simulation-based](#simulation-based)
+      - [Proxy-based](#proxy-based)
+      - [Sketch-based](#sketch-based)
+    - [Diffusion models](#diffusion-models)
+    - [Influence probabilities](#influence-probabilities)
+    - [Endorsement policies](#endorsement-policies)
+  - [Useful papers](#useful-papers)
+  - [Example](#example)
+  - [Credits](#credits)
+
 ## Requirements
 
 NetMax was developed with Python 3.12 and requires the installation of the following libraries:
@@ -100,3 +116,61 @@ node chooses to endorse. Several endorsement policies are implemented:
 - A voting-based policy, which chooses the most occurring agent between the already activated neighbors of the node (**keyword**: `voting`)
 - A community-based approach, which applies the voting strategy to the community the node belongs to instead of its neighbors (**keyword**: `community`)
 - A similarity-based policy, which essentially is a weighted voting strategy based on the SimRank similarity between the node and its neighbors (**keyword**: `sim_endorsement`)
+
+## Useful papers
+
+Here is a non-exhaustive list of useful papers which have been studied thoroughly to develop this framework:
+
+- Bharathi et al. - Competitive Influence Maximization in Social Networks
+- Borgs et al. - Maximizing Social Influence in Nearly Optimal Time
+- Borodin et al. - Threshold Models for Competitive Influence in Social Networks
+- Budak et al. - Limiting the Spread of Misinformation in Social Networks
+- Carnes et al. - Maximizing influence in a competitive social network
+- Chen et al. - Efficient Influence Maximization in Social Networks
+- Chen et al. - StaticGreedy Solving the Scalability-Accuracy Dilemma in Influence Maximization
+- Goyal et al. - CELF++ Optimizing the Greedy Algorithm for Influence Maximization in Social Networks
+- Goyal et al. - Learning Influence Probabilities In Social Networks
+- Goyal et al. - SimPath An Efficient Algorithm for Influence Maximization under the Linear Threshold Model
+- Gursoy et al. - Influence Maximization in Social Networks Under Deterministic Linear Threshold Model
+- Huang et al. - Competitive and complementary influence maximization in social network A follower's perspective
+- Kempe et al. - Influential Nodes in a Diffusion Model for Social Networks
+- Kempe et al. - Maximizing the Spread of Influence through a Social Network
+- Kong et al. - Online Influence Maximization under Decreasing Cascade Model
+- Leskovec et al. - Cost-Effective Outbreak Detection in Networks
+- Li et al. - GetReal Towards Realistic Selection of Influence Maximization Strategies in Competitive Networks
+- Lin et al. - A Learning-based Framework to Handle Multi-round Multi-party Influence Maximization on Social Networks
+- Liu - Influence maximization in social networks An ising-model-based approach
+- Liu et al. - Influence Maximization over Large-Scale Social Networks A Bounded Linear Approach
+- Lu et al. - From Competition to Complementarity Comparative Influence Diffusion and Maximization
+- Tang et al. - Influence Maximization in Near-Linear Time A Martingale Approach
+- Tang et al. - Influence Maximization Near Optimal Time Complexity Meets Practical Efficiency
+- Wang et al. - Community-based Greedy Algorithm for Mining Top-K Influential Nodes in Mobile Social Networks
+- Zhou et al. - UBLF An Upper Bound Based Approach to Discover Influential Nodes in Social Networks
+- Zhu et al. - Minimum cost seed set for competitive social influence
+
+## Example
+
+The following is a short example of how to create a simple influence maximization game with two agents. The data is read from a `txt` file with a function defined in the `utils.py` file, but alternatively the user can directly input a `networkx.DiGraph` object with the methods provided by **networkx**.
+
+```
+import utils
+import influence_maximization as im
+
+g = utils.read_adjacency_matrix("../data/network.txt")
+# Dictionary (agent_name: agent_budget)
+agents = {
+    'Agent_0': 10
+    'Agent_1': 10
+}
+im_instance = im.InfluenceMaximization(input_graph=g, agents=agents, alg='tim_p', 
+                                        diff_model='ic', inf_prob='random', r=1000,
+                                        insert_opinion=False, endorsement_policy='random', verbose=True)
+seed, spread, execution_time = im_instance.run()
+print(f"Seed sets found: {seed}")
+print(f"Spreads: {spread}")
+print(f"Total execution time: {execution_time}")
+```
+
+## Credits
+
+The creators of NetMax are Lorenzo Bloise and Carmelo Gugliotta.
