@@ -54,5 +54,4 @@ NetMax is a python library that provides the implementation of several algorithm
         [X] Decreasing Cascade
     [X] Add multi-processing from the following link:
         https://stackoverflow.com/questions/78510868/python-threads-do-not-utilize-cpu-cores-fully
-    [ ] Parallelize the node exploration in simulation-based algorithms (use "multiprocessing" python library)
     [X] Add a graph visualization tool with Dash
