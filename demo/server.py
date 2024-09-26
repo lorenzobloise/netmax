@@ -1,6 +1,6 @@
 from dash import Dash, dcc, html, Input, Output, callback_context
 import plotly.graph_objs as go
-from common.utils import read_adjacency_matrix
+from utils import read_adjacency_matrix
 import influence_maximization as im
 import random
 
@@ -124,9 +124,8 @@ class Server:
 
     def start_game(self, n_clicks):
         if(n_clicks==1):
-            seed=self.im_instance.run()
-            print(seed)
-            self.fig=self.__update_figure__(seed)
+            seed, _, _ = self.im_instance.run()
+            self.fig = self.__update_figure__(seed)
             return self.fig
         return self.fig
 

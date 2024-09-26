@@ -2,7 +2,6 @@ networkx==3.3
 numpy
 scipy
 tqdm
-matplotlib
 heapdict
 pandas
 dash==2.18.0

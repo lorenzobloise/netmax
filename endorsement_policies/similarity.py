@@ -4,7 +4,7 @@ import networkx as nx
 
 class Similarity(EndorsementPolicy):
 
-    name = "similarity_endorsement"
+    name = "sim_endorsement"
 
     def __init__(self, graph):
         super().__init__(graph)
@@ -12,7 +12,7 @@ class Similarity(EndorsementPolicy):
 
     def choose_agent(self, node, graph):
         scores = dict()
-        for neighbor in graph[node]:
+        for neighbor in set(list(graph.predecessors(node))+list(graph.successors(node))):
             # Check if the neighbor is already activated
             if im.is_active(graph, neighbor):
                 # Compute similarity

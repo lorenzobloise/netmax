@@ -13,7 +13,7 @@ def read_adjacency_matrix(input_path):
         graph.add_edge(int(start), int(end), p=float(weight))
     return graph
 
-def process_graph_file(file_path):
+def __process_graph_file__(file_path):
     with open(file_path, 'r') as f:
         lines = f.readlines()
     nodes = set()
