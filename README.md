@@ -89,7 +89,7 @@ The influence probabilities are used to label the edges between the network node
 - An opinion-based approach (**keyword**: `opinion`) which assigns to each node a vector of **opinions** (namely, values between `0` and `1`) and computes the influence probability comparing the opinions of the two nodes
  with cosine similarity and taking into account also their SimRank similarity, with the formula:
 
-$p(u,v)=b+k*\left(\frac{1}{outdeg(u)}*similarity(u,v)+cos\_sim(opinion(u),opinion(v))\right)$
+$p(u,v)=b+k*\left(\frac{1}{outdeg(u)}*similarity(u,v)+cossim(opinion(u),opinion(v))\right)$
 
 ### Endorsement policies
 
