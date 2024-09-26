@@ -1,8 +1,8 @@
-networkx==3.2.1
+networkx==3.3
 numpy
 scipy
-tqdm~=4.66.5
-matplotlib~=3.9.2
-heapdict~=1.0.1
-pandas~=2.2.2
+tqdm
+matplotlib
+heapdict
+pandas
 dash==2.18.0
