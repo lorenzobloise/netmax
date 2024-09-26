@@ -1,10 +1,10 @@
 import networkx as nx
-from common import utils
+import utils
 from agent import Agent
 from algorithms.algorithm import Algorithm
 from endorsement_policies.endorsement_policy import EndorsementPolicy
 from diffusion_models.diffusion_model import DiffusionModel
-from common.influence_probabilities.influence_probability import InfluenceProbability
+from influence_probabilities.influence_probability import InfluenceProbability
 import time
 import logging
 from tqdm import tqdm
@@ -153,16 +153,16 @@ class InfluenceMaximization:
                  insert_opinion: bool = False, inv_edges: bool = False, r: int = 100, verbose: bool = False):
         """
         Create an instance of the InfluenceMaximization class.
-        :param input_graph: A directed graph representing the social network.
+        :param input_graph: A directed graph representing the network (of type networkx.DiGraph).
         :param agents: A dictionary where the key is the agent name and the value is his budget.
         :param alg: The algorithm to use for influence maximization.
         :param diff_model: The diffusion model to use.
-        :param inf_prob: Probability distribution to generate (if needed) the probabilities of influence between nodes. The framework implements different probability distributions, default is None.
+        :param inf_prob: Probability distribution used to generate (if needed) the probabilities of influence between nodes. The framework implements different influence probabilities, default is None.
         :param endorsement_policy: The policy that nodes use to choose which agent to endorse when they have been contacted by more than one agent. The framework implements different endorsement policies, default is 'random'.
-        :param insert_opinion: True if the nodes do not contain an information about their opinion on the agents, False otherwise or if the opinion is not used.
+        :param insert_opinion: True if the nodes do not contain any information about their opinion on the agents, False otherwise or if the opinion is not used.
         :param inv_edges: A boolean indicating whether to invert the edges of the graph.
         :param r: Number of simulations to execute. Default is 100.
-        :param verbose: Set the logging level to INFO.
+        :param verbose: If True sets the logging level to INFO, otherwise displays only the minimal information.
         """
         self.graph = input_graph.copy()
         self.agents = [Agent(list(agents.keys())[idx], list(agents.values())[idx], idx) for idx in range(len(agents))]
@@ -294,9 +294,11 @@ class InfluenceMaximization:
         for a in self.agents:
             a.seed = [self.inverse_mapping[s] for s in a.seed]
             a.spread = spreads[a.name]
+        seed = {a.name: a.seed for a in self.agents}
+        spread = {a.name: a.spread for a in self.agents}
         self.result = {
-            'seed': {a.name: a.seed for a in self.agents},
-            'spread': {a.name: a.spread for a in self.agents},
+            'seed': seed,
+            'spread': spread,
             'execution_time': execution_time
         }
-        return self.result['seed']
+        return seed, spread, execution_time

@@ -1,4 +1,4 @@
-from common.influence_probabilities.influence_probability import InfluenceProbability
+from influence_probabilities.influence_probability import InfluenceProbability
 import networkx as nx
 import numpy as np
 

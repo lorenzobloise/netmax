@@ -10,7 +10,7 @@ class Voting(EndorsementPolicy):
 
     def choose_agent(self, node, graph):
         voting = dict()
-        for neighbor in graph[node]:
+        for neighbor in set(list(graph.predecessors(node))+list(graph.successors(node))):
             # Check if the neighbor is already activated
             if im.is_active(graph, neighbor):
                 agent = graph.nodes[neighbor]['agent']

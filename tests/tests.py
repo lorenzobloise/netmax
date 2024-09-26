@@ -1,7 +1,7 @@
 import unittest
 import random
 import pandas as pd
-from common.utils import read_adjacency_matrix
+from utils import read_adjacency_matrix
 import influence_maximization as im
 
 pd.set_option('display.max_columns', None)
@@ -31,9 +31,7 @@ class GeneralTests(unittest.TestCase):
             im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
                                                      diff_model='ic', inf_prob=None, r=1,
                                                      insert_opinion=False, endorsement_policy='random', verbose=True)
-            seed = im_instance.run()
-            spread = im_instance.result['spread']
-            execution_time = im_instance.result['execution_time']
+            seed, spread, execution_time = im_instance.run()
             result_row = {
                 "algorithm": [a],
                 "time": [execution_time],

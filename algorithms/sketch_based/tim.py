@@ -7,7 +7,7 @@ import copy
 import numpy as np
 import logging
 from tqdm import tqdm
-from common.utils import __binomial_coefficient__
+from utils import __binomial_coefficient__
 
 class TIM(SketchBasedAlgorithm):
     """
