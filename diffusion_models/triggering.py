@@ -12,6 +12,14 @@ class Triggering(DiffusionModel):
     def __init__(self, endorsement_policy):
         super().__init__(endorsement_policy)
 
+    def __copy__(self):
+        result = Triggering(self.endorsement_policy)
+        if self.sim_graph is not None:
+            result.sim_graph = self.sim_graph.copy()
+            for key, value in self.sim_graph.graph.items(): # Copy the graph's attributes
+                result.sim_graph.graph[key] = value
+        return result
+
     def preprocess_data(self, graph):
         for node in graph.nodes:
             graph.nodes[node]['trigger_set'] = [] # Nodes that 'node' is activated by

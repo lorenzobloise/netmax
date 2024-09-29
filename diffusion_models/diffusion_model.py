@@ -7,6 +7,7 @@ class DiffusionModel:
     def __init__(self, endorsement_policy):
         self.endorsement_policy = endorsement_policy
         self.sim_graph = None
+        self.graph_nodes = None
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger(__name__)
 
@@ -28,7 +29,9 @@ class DiffusionModel:
         """
         Add a node to the simulation graph and copy its attributes from the original graph
         """
-        dict_attr = graph.nodes(data=True)[u]
+        if self.graph_nodes==None:
+            self.graph_nodes = graph.nodes(data=True)
+        dict_attr = self.graph_nodes[u]
         self.sim_graph.add_node(u, **dict_attr)
 
     def __initialize_sim_graph__(self, graph, agents):
