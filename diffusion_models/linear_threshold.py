@@ -29,35 +29,31 @@ class LinearThreshold(DiffusionModel):
         super().__initialize_sim_graph__(graph, agents)
         self.sim_graph.graph['stack_prob_sum'] = set()
 
-
-    def __update_prob_sum__(self,graph, node, agent_name):
-        #delete the prob_sum dict of the newly activated node to avoid memory waste
+    def __update_prob_sum__(self, graph, node, agent_name):
+        # Delete the prob_sum dict of the newly activated node to avoid memory waste
         if 'prob_sum' in self.sim_graph.nodes[node]:
             del self.sim_graph.nodes[node]['prob_sum']
             self.__add_node_to_the_stack_prob_sum__(node)
-
-        # I need to remember that i need to reset the prob_sum at the end of the simulation
-        #for each neighbor of the newly activated node
         for (_, v, attr) in graph.out_edges(node, data=True):
-            #if the neighbor is not active
+            # If the neighbor is not active
             if not self.sim_graph.has_node(v):
                 nodes_attr = graph.nodes(data=True)[v]
                 self.sim_graph.add_node(v, **nodes_attr)
                 self.sim_graph.add_edge(node, v, **attr)
                 self.sim_graph.nodes[v]['prob_sum'][agent_name] = self.sim_graph.nodes[v]['prob_sum'].get(agent_name, 0) + attr['p']
                 if len(self.sim_graph.nodes[v]['prob_sum']) == 1:
-                    # equals to 1 if is the first time that the node is reached by someone
+                    # Equals to 1 if is the first time that the node is reached by someone
                     self.__add_node_to_the_stack_prob_sum__(v)
             elif not im.is_active(v, self.sim_graph):
                 self.sim_graph.nodes[v]['prob_sum'][agent_name] = self.sim_graph.nodes[v]['prob_sum'].get(agent_name, 0) + attr['p']
                 if len(graph.nodes[v]['prob_sum']) == 1:
-                    # equals to 1 if is the first time that the node is reached by someone
+                    # Equals to 1 if is the first time that the node is reached by someone
                     self.__add_node_to_the_stack_prob_sum__(v)
 
     def __add_node_to_the_stack_prob_sum__(self, node):
         self.sim_graph.graph['stack_prob_sum'].add(node)
 
-    def __activate_nodes_in_seed_sets__(self,graph, agents):
+    def __activate_nodes_in_seed_sets__(self, graph, agents):
         """
         Activate the nodes in the seed sets of the agents in the simulation graph
         """
@@ -83,7 +79,7 @@ class LinearThreshold(DiffusionModel):
         self.__activate_nodes_in_seed_sets__(graph,agents)
         active_set = im.active_nodes(self.sim_graph)
         newly_activated = list(active_set)
-        while len(newly_activated)>0:
+        while len(newly_activated) > 0:
             pending_nodes = []
             for u in newly_activated:
                 curr_agent_name = self.sim_graph.nodes[u]['agent'].name
