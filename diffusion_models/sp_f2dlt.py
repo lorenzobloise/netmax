@@ -47,6 +47,24 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         self.sim_graph.graph['stack_prob_sum_trusted'] = set()
         self.sim_graph.graph['stack_quiescence_value'] = set()
 
+    def __initialize_trust_untrust_graphs__(self, graph):
+        self.graph_with_trust = nx.DiGraph()
+        self.graph_with_distrust = nx.DiGraph()
+        # Delete all the edges with p <=0
+        graph_nodes = graph.nodes(data=True)
+        for u, v, attr in graph.edges(data=True):
+            node_u = graph_nodes[u]
+            node_v = graph_nodes[v]
+            if attr['p'] > 0:
+                self.graph_with_trust.add_node(u, **node_u)
+                self.graph_with_trust.add_node(v, **node_v)
+                self.graph_with_trust.add_edge(u, v, **attr)
+            else:
+                self.graph_with_distrust.add_node(u, **node_u)
+                self.graph_with_distrust.add_node(v, **node_v)
+                self.graph_with_distrust.add_edge(u, v, **attr)
+
+
     def __add_node_to_the_stack_prob_sum_trusted__(self, node):
         self.sim_graph.graph['stack_prob_sum_trusted'].add(node)
 
@@ -159,16 +177,16 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         """
         Check if any quiescent nodes has expired their quiescence state
         """
-        result = []
+        newly_activated = set()
         i = len(quiescent_nodes) - 1
         while i > 0:
             q = quiescent_nodes[i]
             if self.__quiescence_expired__(q):
                 im.activate_node(self.sim_graph, q, self.sim_graph.nodes[q]['agent'])
                 self.sim_graph.nodes[q]['last_activation_time'] = self.current_time
-                result.append(quiescent_nodes.pop(i))
+                newly_activated.add(quiescent_nodes.pop(i))
             i -= 1
-        return result
+        return newly_activated
 
     def __check_change_campaign__(self, graph, node, agents):
         """
@@ -214,31 +232,17 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         self.current_time = 0
         if self.sim_graph is None:
             self.__initialize_sim_graph__(graph, agents)
-            self.graph_with_trust = nx.DiGraph()
-            self.graph_with_distrust = nx.DiGraph()
-            # Delete all the edges with p <=0
-            graph_nodes = graph.nodes(data=True)
-            for u, v, attr in graph.edges(data=True):
-                node_u = graph_nodes[u]
-                node_v = graph_nodes[v]
-                if attr['p'] > 0:
-                    self.graph_with_trust.add_node(u, **node_u)
-                    self.graph_with_trust.add_node(v, **node_v)
-                    self.graph_with_trust.add_edge(u, v, **attr)
-                else:
-                    self.graph_with_distrust.add_node(u, **node_u)
-                    self.graph_with_distrust.add_node(v, **node_v)
-                    self.graph_with_distrust.add_edge(u, v, **attr)
+            self.__initialize_trust_untrust_graphs__(graph)
 
 
         self.__activate_nodes_in_seed_sets__(graph, agents)
-        active_set = im.active_nodes(self.sim_graph)
-        seed_sets = active_set.copy()
-        newly_activated = list(active_set)
+        active_set = set(im.active_nodes(self.sim_graph))
+        seed_sets = set(active_set.copy())
+        newly_activated = set(active_set.copy())
         quiescent_nodes = []
         progress_bar = tqdm(total=self.T, desc="Time")
         while not (self.__no_more_activation_attempts__(newly_activated, quiescent_nodes) or self.__time_expired__()):
-            pending_nodes = []
+            pending_nodes = set()
             # R1 state-transition rule
             for u in newly_activated:
                 curr_agent_name = self.sim_graph.nodes[u]['agent'].name
@@ -246,8 +250,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
                 for _, v, attr in inactive_out_edges:
                     if self.sim_graph.nodes[v]['prob_sum_trusted'][curr_agent_name] >= self.__activation_threshold_function__(graph, v, self.current_time):
                         im.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
-                        if v not in pending_nodes:
-                            pending_nodes.append(v)
+                        pending_nodes.add(v)
             # Contacted inactive nodes choose which campaign actually determines their transition in the quiescent state
             self.__extend_stack__(pending_nodes)
             quiescent_nodes.extend(im.transition_nodes_into_quiescent_state(self.sim_graph, self.endorsement_policy, pending_nodes))
@@ -255,15 +258,16 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             self.__extend_quiescence_stack__(quiescent_nodes)
             # R2 state-transition rule
             newly_activated = self.__check_quiescent_nodes__(quiescent_nodes)
-            active_set.extend(newly_activated)
+            active_set.update(newly_activated)
             for u in newly_activated:
                 self.__update_prob_sum_trusted__(graph, u, self.sim_graph.nodes[u]['agent'].name)
             # R3 state-transition rule
             for u in active_set:
                 if u in seed_sets:
                     continue
-                if self.__check_change_campaign__(graph, u, agents) and u not in newly_activated:
-                    newly_activated.append(u)
+                #if self.__check_change_campaign__(graph, u, agents) and u not in newly_activated:
+                if u not in newly_activated and self.__check_change_campaign__(graph, u, agents):
+                    newly_activated.add(u)
             self.current_time += 1
             progress_bar.update(1)
         progress_bar.update(self.T - self.current_time)
