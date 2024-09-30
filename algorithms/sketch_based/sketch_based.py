@@ -15,6 +15,7 @@ class SketchBasedAlgorithm(Algorithm):
     def __init__(self, graph: nx.DiGraph, agents: list[Agent], curr_agent_id: int, budget, diff_model, r):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
         self.transposed_graph = self.graph.reverse(copy=True)
+        self.diff_model_transposed = self.diff_model.__copy__()
 
     def __generate_sketch__(self):
         """
@@ -31,8 +32,18 @@ class SketchBasedAlgorithm(Algorithm):
     def __generate_random_reverse_reachable_set__(self, random_node):
         agents_copy = copy.deepcopy(self.agents)
         agents_copy[self.curr_agent_id].seed.append(random_node)
-        active_set = self.diff_model.activate(self.transposed_graph, agents_copy)[self.agents[self.curr_agent_id].name]
-        return active_set
+        active_set = self.diff_model_transposed.activate(self.transposed_graph, agents_copy)[self.agents[self.curr_agent_id].name]
+        return set(active_set)
+
+    def __in_degree__(self, node):
+        """
+        Custom method definition to handle negative edge weights in F2DLT diffusion models
+        """
+        in_degree = 0
+        for predecessor, _, data in self.graph.in_edges(node, data=True):
+            if data.get('p', 0) > 0:
+                in_degree += 1
+        return in_degree
 
     def run(self):
         raise NotImplementedError("This method must be implemented by subclasses")

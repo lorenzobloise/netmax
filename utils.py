@@ -124,6 +124,27 @@ def __process_2__(file_path):
             node1, node2, sign = map(int, line.split(','))
             f.write(f"{node1} {node2} {sign}\n")
 
+def __process_3__(file_path):
+    """
+    Initial format:
+    <node1> <node2> <sign> <term>
+    """
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+    nodes = set()
+    num_edges = len(lines)
+    for line in lines:
+        node1, node2, _, _ = map(int, line.split())
+        nodes.add(node1)
+        nodes.add(node2)
+    num_nodes = len(nodes)
+    new_first_line = f"{num_nodes} {num_edges}\n"
+    with open(file_path, 'w') as f:
+        f.write(new_first_line)
+        for line in lines:
+            node1, node2, sign, _ = map(int, line.split())
+            f.write(f"{node1} {node2} {sign}\n")
+
 def __binomial_coefficient__(n, k):
     C = [[-1 for _ in range(k+1)] for _ in range(n+1)]
     for i in range(n+1):
