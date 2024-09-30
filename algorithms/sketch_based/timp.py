@@ -51,7 +51,7 @@ class TIMp(SketchBasedAlgorithm):
             for rr_set in self.rr_sets:
                 in_degree_sum=0
                 for node in rr_set:
-                    in_degree_sum += self.graph.in_degree(node)
+                    in_degree_sum += self.__in_degree__(node)
                 kappa = 1 - (1 - (in_degree_sum / self.m))**self.sum_of_budgets
                 sum += kappa
             if (sum/c_i) > (1/(2**i)):

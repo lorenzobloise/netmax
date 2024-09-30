@@ -48,9 +48,9 @@ class GeneralTests(unittest.TestCase):
 
     def test_signed_graph(self):
         df = pd.DataFrame()
-        #g = read_signed_adjacency_matrix('../data/epinions-signed.txt')
+        #g = read_signed_adjacency_matrix('../data/wiki-elec.txt')
         g = read_weighted_and_signed_adjacency_matrix('../data/wikiconflict-signed_edgelist.txt')
-        algo = ['static_greedy']
+        algo = ['tim_p']
         dict_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
@@ -70,13 +70,13 @@ class GeneralTests(unittest.TestCase):
         print(df)
 
     def test_diffusion_model(self):
-        g = read_weighted_and_signed_adjacency_matrix('../data/wikiconflict-signed_edgelist.txt')
+        g = read_weighted_and_signed_adjacency_matrix('../data/wiki-elec_edgelist.txt')
         dict_of_agents = self.__create_agents__(num_agents=2)
         im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg='tim_p',
                                                     diff_model='sp_f2dlt', inf_prob=None, r=1, insert_opinion=False,
                                                     endorsement_policy='random', verbose=True)
-        im_instance.agents[0].seed = [115, 125, 100, 64, 591, 76, 624, 595, 66, 19]
-        im_instance.agents[1].seed = [37, 506, 435, 28, 109, 86, 27, 12, 80, 4]
+        im_instance.agents[0].seed = [27, 79, 3124, 6100, 68, 345, 6759, 4359, 5977, 1328]
+        im_instance.agents[1].seed = [173, 2872, 5087, 4, 315, 6447, 867, 1095, 1306, 1343]
         active_sets = im_instance.diff_model.activate(im_instance.graph, im_instance.agents)
         print(len(active_sets['Agent_0']))
         print(len(active_sets['Agent_1']))
