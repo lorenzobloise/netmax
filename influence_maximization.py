@@ -89,6 +89,9 @@ def is_active(node, graph):
 def is_pending(node, graph):
     return graph.nodes[node]['status'] == 'PENDING'
 
+def is_quiescent(node, graph):
+    return graph.nodes[node]['status'] == 'QUIESCENT'
+
 def remove_isolated_nodes(graph):
     isolated_nodes = list(nx.isolates(graph))
     if len(isolated_nodes) == 0:
@@ -291,7 +294,6 @@ class InfluenceMaximization:
             for agent in self.__get_agents_not_fulfilled__():
                 self.logger.info(f"Agent {agent.name} (id: {agent.id}) is playing")
                 alg.set_curr_agent(agent.id)
-                alg.set_graph(self.graph)
                 partial_seed, new_spreads = alg.run()
                 for node in partial_seed:
                     self.logger.debug(f"Activating node {node} by agent {agent.name}")
