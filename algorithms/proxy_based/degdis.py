@@ -43,6 +43,7 @@ class DegDis(ProxyBasedAlgorithm):
         return self.d[v] - 2 * self.t[self.curr_agent_id][v] - (self.d[v] - self.t[self.curr_agent_id][v]) * self.t[self.curr_agent_id][v] * self.p[self.curr_agent_id][v]
 
     def run(self):
+        self.__update_active_nodes__()
         # Initialize degrees and degree discounts
         if self.dd is None:
             self.__initialize_degree_discount__()

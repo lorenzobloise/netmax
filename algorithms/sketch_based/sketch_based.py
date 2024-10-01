@@ -35,9 +35,10 @@ class SketchBasedAlgorithm(Algorithm):
         active_set = self.diff_model_transposed.activate(self.transposed_graph, agents_copy)[self.agents[self.curr_agent_id].name]
         return set(active_set)
 
-    def __in_degree__(self, node):
+    def __in_degree_positive_edges__(self, node):
         """
-        Custom method definition to handle negative edge weights in F2DLT diffusion models
+        Custom method definition to handle negative edge weights in signed graphs.
+        In this method we compute the in-degree taking into account only the positive in-edges
         """
         in_degree = 0
         for predecessor, _, data in self.graph.in_edges(node, data=True):

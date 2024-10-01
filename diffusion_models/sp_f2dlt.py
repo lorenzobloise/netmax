@@ -21,8 +21,8 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         self._lambda = random.uniform(0,5)
         self.current_time = 0
         self.T = 30
-        self.graph_with_trust = None
-        self.graph_with_distrust = None
+        self.trust_graph = None
+        self.distrust_graph = None
 
     def __copy__(self):
         result = SemiProgressiveFriendFoeDynamicLinearThreshold(self.endorsement_policy)
@@ -46,23 +46,6 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         self.sim_graph.graph['stack_prob_sum_trusted'] = set()
         self.sim_graph.graph['stack_quiescence_value'] = set()
 
-    def __initialize_trust_distrust_graphs__(self, graph):
-        self.graph_with_trust = nx.DiGraph()
-        self.graph_with_distrust = nx.DiGraph()
-        # Delete all the edges with p <=0
-        graph_nodes = graph.nodes(data=True)
-        for u, v, attr in graph.edges(data=True):
-            node_u = graph_nodes[u]
-            node_v = graph_nodes[v]
-            self.graph_with_trust.add_node(u, **node_u)
-            self.graph_with_trust.add_node(v, **node_v)
-            self.graph_with_distrust.add_node(u, **node_u)
-            self.graph_with_distrust.add_node(v, **node_v)
-            if attr['p'] > 0:
-                self.graph_with_trust.add_edge(u, v, **attr)
-            else:
-                self.graph_with_distrust.add_edge(u, v, **attr)
-
     def __add_node_to_the_stack_prob_sum_trusted__(self, node):
         self.sim_graph.graph['stack_prob_sum_trusted'].add(node)
 
@@ -70,9 +53,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         # prob_sum_trusted dict must not be deleted, because it has to be updated to allow R3 state-transition rule
         if 'prob_sum_trusted' in self.sim_graph.nodes[node]:
             self.__add_node_to_the_stack_prob_sum_trusted__(node)
-
-
-        for (_, v, attr) in self.graph_with_trust.out_edges(node, data=True):
+        for (_, v, attr) in self.trust_graph.out_edges(node, data=True):
             # If v has not been added to the simulation graph yet, add it
             if not self.sim_graph.has_node(v):
                 nodes_attr = graph.nodes[v]
@@ -89,7 +70,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
     def __redistribute_prob_sum_trusted__(self, graph, node, old_agent, new_agent):
         # At this point, all the node's out-neighbors have already been added to the simulation graph
         # For each of its out-neighbors (active or not) we redistribute the prob_sum_trusted
-        for (_, v, attr) in self.graph_with_trust.out_edges(node, data=True):
+        for (_, v, attr) in self.trust_graph.out_edges(node, data=True):
             self.sim_graph.nodes[v]['prob_sum_trusted'][old_agent.name] = self.sim_graph.nodes[v]['prob_sum_trusted'].get(old_agent.name, 0) - attr['p']
             self.sim_graph.nodes[v]['prob_sum_trusted'][new_agent.name] = self.sim_graph.nodes[v]['prob_sum_trusted'].get(new_agent.name, 0) + attr['p']
 
@@ -127,23 +108,15 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
 
     def __distrusted_in_neighbors_same_campaign__(self, node):
         result = []
-        if not self.graph_with_distrust.has_node(node):
+        if not self.distrust_graph.has_node(node):
             # So the node is not in the distrust graph and has no distrust in-neighbors
             return result
-        for u in self.graph_with_distrust.predecessors(node):
+        for u in self.distrust_graph.predecessors(node):
             if (self.sim_graph.has_node(u)
                 and im.is_active(u, self.sim_graph)
                 and self.sim_graph.nodes[node]['agent'].name == self.sim_graph.nodes[u]['agent'].name):
                 result.append(u)
         return result
-
-    def __trusts__(self, graph, u, v):
-        """
-        Returns True if node u trusts his in-neighbor v
-        """
-        if not graph.has_edge(v, u):
-            raise ValueError(f"Graph does not have edge ({v},{u})")
-        return graph.edges[v, u]['p'] > 0
 
     def __quiescence_function__(self, graph, node):
         weight_sum = 0
@@ -222,7 +195,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
 
     def __build_trusted_inactive_out_edges__(self, graph, u):
         inactive_out_edges = []
-        for (_, v, attr) in self.graph_with_trust.out_edges(u, data=True):
+        for (_, v, attr) in self.trust_graph.out_edges(u, data=True):
             if not self.sim_graph.has_node(v):
                 # If not in the simulation graph, is not active
                 # because the node has not been reached yet
@@ -241,7 +214,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         self.current_time = 0
         if self.sim_graph is None:
             self.__initialize_sim_graph__(graph, agents)
-            self.__initialize_trust_distrust_graphs__(graph)
+            self.trust_graph, self.distrust_graph = im.build_trust_and_distrust_graphs(graph, verbose=False)
         self.__activate_nodes_in_seed_sets__(graph, agents)
         active_set = set(im.active_nodes(self.sim_graph))
         seed_sets = set(active_set.copy())

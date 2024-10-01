@@ -19,9 +19,6 @@ class Algorithm:
         self.diff_model = diff_model
         self.r = r
 
-    def set_graph(self, graph):
-        self.graph = graph
-
     def set_curr_agent(self, curr_agent_id):
         self.curr_agent_id = curr_agent_id
 

@@ -92,6 +92,36 @@ def is_pending(node, graph):
 def is_quiescent(node, graph):
     return graph.nodes[node]['status'] == 'QUIESCENT'
 
+def graph_is_signed(graph):
+    return graph.graph['signed']
+
+def build_trust_and_distrust_graphs(graph, verbose=False):
+    trust_graph = nx.DiGraph()
+    distrust_graph = nx.DiGraph()
+    for key, value in graph.graph.items():  # Copy the graph's attributes
+        trust_graph.graph[key] = value
+        distrust_graph.graph[key] = value
+    graph_nodes = graph.nodes(data=True)
+    progress_bar = None
+    if verbose:
+        progress_bar = tqdm(total=len(graph.edges), desc="Building trust and distrust graphs")
+    for u, v, attr in graph.edges(data=True):
+        node_u = graph_nodes[u]
+        node_v = graph_nodes[v]
+        # I'm sure that the result graphs will have all the nodes in the original graph because
+        # the original graph has undergone preprocessing which has deleted isolated nodes
+        trust_graph.add_node(u, **node_u)
+        trust_graph.add_node(v, **node_v)
+        distrust_graph.add_node(u, **node_u)
+        distrust_graph.add_node(v, **node_v)
+        if attr['p'] > 0: # v trusts u
+            trust_graph.add_edge(u, v, **attr)
+        else:
+            distrust_graph.add_edge(u, v, **attr)
+        if verbose:
+            progress_bar.update(1)
+    return trust_graph, distrust_graph
+
 def remove_isolated_nodes(graph):
     isolated_nodes = list(nx.isolates(graph))
     if len(isolated_nodes) == 0:
@@ -120,7 +150,7 @@ def concurrent_simulation(graph, agents, diff_model, r):
     result = spreads
     return result
 
-def simulation(graph, diff_model, agents, r=10000, community=None, verbose=False):
+def simulation(graph, diff_model, agents, r, community=None, verbose=False):
     spreads = dict()
     progress_bar = None
     if verbose:
@@ -193,8 +223,6 @@ class InfluenceMaximization:
         self.inf_prob = None if inf_prob_class is None else inf_prob_class()
         self.endorsement_policy = endorsement_policy_class(self.graph)
         self.diff_model = diff_model_class(self.endorsement_policy)
-        self.graph.graph['inf_prob'] = self.inf_prob
-        self.graph.graph['insert_opinion'] = insert_opinion
         # Set the parameters
         self.insert_opinion = insert_opinion
         self.inv_edges = inv_edges
@@ -245,6 +273,15 @@ class InfluenceMaximization:
         First remove isolated nodes and then insert probabilities if needed.
         :return: The mapping between the original nodes and the new nodes.
         """
+        # Set some attributes of the graph
+        self.graph.graph['inf_prob'] = self.inf_prob
+        self.graph.graph['insert_opinion'] = self.insert_opinion
+        self.graph.graph['signed'] = False
+        # If one edge has the 's' attribute, it means that the graph is signed
+        for _, _, attr in self.graph.edges(data=True):
+            if 's' in attr:
+                self.graph.graph['signed'] = True
+                break
         mapping = remove_isolated_nodes(self.graph)
         if self.inv_edges:
             self.graph = self.graph.reverse(copy=False)
@@ -266,7 +303,6 @@ class InfluenceMaximization:
     def __budget_fulfilled__(self, agent):
         """
         Check if the budget of an agent is fulfilled.
-
         """
         return len(agent.seed) >= agent.budget
 
@@ -309,7 +345,7 @@ class InfluenceMaximization:
         self.logger.info(f"Seed sets found:")
         for a in self.agents:
             self.logger.info(f"{a.name}: {[self.inverse_mapping[s] for s in a.seed]}")
-        self.logger.info(f"Starting the spreads estimation with {self.r} simulations")
+        self.logger.info(f"Starting the spreads estimation with {self.r} simulation(s)")
         spreads = simulation(graph=self.graph, diff_model=self.diff_model, agents=self.agents, r=self.r, verbose=True)
         for a in self.agents:
             a.seed = [self.inverse_mapping[s] for s in a.seed]
