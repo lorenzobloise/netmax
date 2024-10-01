@@ -1,3 +1,6 @@
+import multiprocessing
+import math
+import concurrent.futures
 import networkx as nx
 import utils
 from agent import Agent
@@ -140,15 +143,6 @@ def remove_nodes_not_in_community(community, active_sets):
     for agent_name in active_sets.keys():
         active_sets[agent_name] = [node for node in active_sets[agent_name] if node in community]
     return active_sets
-
-def concurrent_simulation(graph, agents, diff_model, r):
-    spreads = dict()
-    for i in range(r):
-        active_sets = diff_model.activate(graph, agents)
-        for agent_name in active_sets.keys():
-            spreads[agent_name] = spreads.get(agent_name, 0) + len(active_sets[agent_name])
-    result = spreads
-    return result
 
 def simulation(graph, diff_model, agents, r, community=None, verbose=False):
     spreads = dict()
