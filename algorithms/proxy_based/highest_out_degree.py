@@ -15,6 +15,7 @@ class HighestOutDegree(ProxyBasedAlgorithm):
         self.out_deg_ranking = None
 
     def run(self):
+        self.__update_active_nodes__()
         if self.out_deg_ranking is None:
             self.out_deg_ranking = sorted(im.inactive_nodes(self.graph), key=lambda node: self.graph.out_degree(node))
         seed_set = []

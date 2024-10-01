@@ -50,12 +50,12 @@ class GeneralTests(unittest.TestCase):
         df = pd.DataFrame()
         #g = read_signed_adjacency_matrix('../data/wiki-elec.txt')
         g = read_weighted_and_signed_adjacency_matrix('../data/wikiconflict-signed_edgelist.txt')
-        algo = ['tim_p']
+        algo = ['group_pr']
         dict_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
                                                     diff_model='sp_f2dlt', inf_prob=None, r=1, insert_opinion=False,
-                                                    endorsement_policy='random', verbose=False)
+                                                    endorsement_policy='random', verbose=True)
             seed, spread, execution_time = im_instance.run()
             result_row = {
                 "algorithm": [a],

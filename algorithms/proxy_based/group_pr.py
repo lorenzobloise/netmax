@@ -50,6 +50,7 @@ class Group_PR(ProxyBasedAlgorithm):
         return delta_s * (len(self.influencee) / (1 - self.d))
 
     def run(self):
+        self.__update_active_nodes__()
         if self.delta_dict is None:
             self.__initialize_delta_dict__()
         agents_copy = copy.deepcopy(self.agents)
