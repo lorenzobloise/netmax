@@ -183,6 +183,8 @@ def find_hierarchy(superclass):
     for subclass in superclass.__subclasses__():
         if hasattr(subclass, 'name'):
             subclasses.append((subclass.name, subclass))
+            subclasses.extend(find_hierarchy(subclass))
         else:
             subclasses.extend(find_hierarchy(subclass))
+
     return subclasses

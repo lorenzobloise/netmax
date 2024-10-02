@@ -6,8 +6,8 @@ from algorithms.proxy_based.proxy_based import ProxyBasedAlgorithm
 class Group_PR(ProxyBasedAlgorithm):
     """
     Paper: Liu et al. - "Influence Maximization over Large-Scale Social Networks A Bounded Linear Approach"
-
     """
+
     name = 'group_pr'
 
     def __init__(self, graph, agents, curr_agent_id, budget, diff_model, r):

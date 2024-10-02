@@ -26,6 +26,9 @@ class ProxyBasedAlgorithm(Algorithm):
         from the one in the algorithm, thus whenever we activate some node inside the InfluenceMaximization class,
         we have to report these activations on the trust graph of the proxy-based algorithm
         """
+        if not im.graph_is_signed(self.graph):
+            # If the graph is not signed, there is no need to update the active nodes (the graph is the same)
+            return
         for a in self.agents:
             for node in a.seed:
                 if not im.is_active(node, self.graph):

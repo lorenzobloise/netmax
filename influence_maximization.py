@@ -1,6 +1,3 @@
-import multiprocessing
-import math
-import concurrent.futures
 import networkx as nx
 import utils
 from agent import Agent
@@ -275,6 +272,7 @@ class InfluenceMaximization:
         for _, _, attr in self.graph.edges(data=True):
             if 's' in attr:
                 self.graph.graph['signed'] = True
+            else:
                 break
         mapping = remove_isolated_nodes(self.graph)
         if self.inv_edges:
