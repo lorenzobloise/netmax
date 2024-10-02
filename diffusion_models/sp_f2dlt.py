@@ -2,7 +2,6 @@ from diffusion_models.diffusion_model import DiffusionModel
 import random
 import math
 import influence_maximization as im
-import networkx as nx
 
 class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
     """
@@ -11,7 +10,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
 
     name = 'sp_f2dlt'
 
-    def __init__(self, endorsement_policy, biased=True):
+    def __init__(self, endorsement_policy, biased=False):
         super().__init__(endorsement_policy)
         self.biased = biased
         if self.biased:
@@ -67,7 +66,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
                 # Equals to 1 if is the first time that the node is reached by someone
                 self.__add_node_to_the_stack_prob_sum_trusted__(v)
                 
-    def __redistribute_prob_sum_trusted__(self, graph, node, old_agent, new_agent):
+    def __redistribute_prob_sum_trusted__(self, node, old_agent, new_agent):
         # At this point, all the node's out-neighbors have already been added to the simulation graph
         # For each of its out-neighbors (active or not) we redistribute the prob_sum_trusted
         for (_, v, attr) in self.trust_graph.out_edges(node, data=True):
@@ -130,8 +129,8 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             print(self._lambda * weight_sum)
             print(graph.nodes[node]['quiescence_time'])
 
-    def __activation_threshold_function__(self, graph, node, time):
-        theta_v = graph.nodes[node]['threshold']
+    def __activation_threshold_function__(self, node, time):
+        theta_v = self.sim_graph.nodes[node]['threshold']
         if self.biased:
             return theta_v + self.delta * min((1 - theta_v)/self.delta, self.current_time - self.sim_graph.nodes[node]['last_activation_time'])
         else:
@@ -170,7 +169,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             i -= 1
         return newly_activated
 
-    def __check_change_campaign__(self, graph, node, agents):
+    def __check_change_campaign__(self, node, agents):
         """
         Check if the node should change the agent
         and if so, change it and return True
@@ -178,7 +177,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         """
         dict_prob_sum_trusted = self.sim_graph.nodes[node]['prob_sum_trusted']
         max_agent_name = max(dict_prob_sum_trusted, key=dict_prob_sum_trusted.get)
-        if max_agent_name != self.sim_graph.nodes[node]['agent'].name:
+        if max_agent_name != self.sim_graph.nodes[node]['agent'].name and dict_prob_sum_trusted[max_agent_name] >= self.__activation_threshold_function__(node, self.current_time):
             # Change the agent of the node
             old_agent= self.sim_graph.nodes[node]['agent']
             new_agent = None
@@ -189,7 +188,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             self.sim_graph.nodes[node]['agent'] = new_agent
             self.sim_graph.nodes[node]['last_activation_time'] = self.current_time
             # Update the prob_sum_trusted dict
-            self.__redistribute_prob_sum_trusted__(graph, node, old_agent, new_agent)
+            self.__redistribute_prob_sum_trusted__(node, old_agent, new_agent)
             return True
         return False
 
@@ -210,6 +209,12 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
                 inactive_out_edges.append((u, v, attr))
         return inactive_out_edges
 
+    def __check_deactivated_nodes__(self, active_set, seed_sets):
+        """
+        This model does not have a state-transition rule that deactivates nodes (Semi-Progressive)
+        """
+        pass
+
     def activate(self, graph, agents):
         self.current_time = 0
         if self.sim_graph is None:
@@ -227,7 +232,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
                 curr_agent_name = self.sim_graph.nodes[u]['agent'].name
                 inactive_out_edges = self.__build_trusted_inactive_out_edges__(graph, u)
                 for _, v, attr in inactive_out_edges:
-                    if self.sim_graph.nodes[v]['prob_sum_trusted'][curr_agent_name] >= self.__activation_threshold_function__(graph, v, self.current_time):
+                    if self.sim_graph.nodes[v]['prob_sum_trusted'][curr_agent_name] >= self.__activation_threshold_function__(v, self.current_time):
                         im.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
                         pending_nodes.add(v)
             # Contacted inactive nodes choose which campaign actually determines their transition in the quiescent state
@@ -244,8 +249,10 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             for u in active_set:
                 if u in seed_sets:
                     continue
-                if u not in newly_activated and self.__check_change_campaign__(graph, u, agents):
+                if u not in newly_activated and self.__check_change_campaign__(u, agents):
                     newly_activated.add(u)
+            # R4 state-transition rule (implemented in subclass npF2DLT)
+            self.__check_deactivated_nodes__(active_set, seed_sets)
             self.current_time += 1
         result = self.__group_by_agent__(self.sim_graph, active_set)
         self.__reverse_operations__()
