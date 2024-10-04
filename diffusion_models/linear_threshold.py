@@ -46,6 +46,8 @@ class LinearThreshold(DiffusionModel):
                     self.__add_node_to_the_stack_prob_sum__(v)
             elif not im.is_active(v, self.sim_graph):
                 self.sim_graph.nodes[v]['prob_sum'][agent_name] = self.sim_graph.nodes[v]['prob_sum'].get(agent_name, 0) + attr['p']
+                if not self.sim_graph.has_edge(node, v):
+                    self.sim_graph.add_edge(node, v, **attr)
                 if len(graph.nodes[v]['prob_sum']) == 1:
                     # Equals to 1 if is the first time that the node is reached by someone
                     self.__add_node_to_the_stack_prob_sum__(v)
