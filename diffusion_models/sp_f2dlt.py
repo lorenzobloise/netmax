@@ -52,7 +52,8 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         # prob_sum_trusted dict must not be deleted, because it has to be updated to allow R3 state-transition rule
         if 'prob_sum_trusted' in self.sim_graph.nodes[node]:
             self.__add_node_to_the_stack_prob_sum_trusted__(node)
-        for (_, v, attr) in self.trust_graph.out_edges(node, data=True):
+        for (_, v) in self.trust_graph.out_edges(node):
+            attr = graph.get_edge_data(node, v)
             # If v has not been added to the simulation graph yet, add it
             if not self.sim_graph.has_node(v):
                 nodes_attr = graph.nodes[v]
@@ -66,11 +67,16 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
                 # Equals to 1 if is the first time that the node is reached by someone
                 self.__add_node_to_the_stack_prob_sum_trusted__(v)
                 
-    def __redistribute_prob_sum_trusted__(self, node, old_agent, new_agent):
+    def __redistribute_prob_sum_trusted__(self, graph, node, old_agent, new_agent):
         # At this point, all the node's out-neighbors have already been added to the simulation graph
         # For each of its out-neighbors (active or not) we redistribute the prob_sum_trusted
-        for (_, v, attr) in self.trust_graph.out_edges(node, data=True):
+        for (_, v) in self.trust_graph.out_edges(node):
+            attr = graph.get_edge_data(node, v)
             self.sim_graph.nodes[v]['prob_sum_trusted'][old_agent.name] = self.sim_graph.nodes[v]['prob_sum_trusted'].get(old_agent.name, 0) - attr['p']
+        im.deactivate_node_in_simulation_graph(graph, self.sim_graph, node)
+        im.activate_node_in_simulation_graph(graph, self.sim_graph, node, new_agent)
+        for (_, v) in self.trust_graph.out_edges(node):
+            attr = graph.get_edge_data(node, v)
             self.sim_graph.nodes[v]['prob_sum_trusted'][new_agent.name] = self.sim_graph.nodes[v]['prob_sum_trusted'].get(new_agent.name, 0) + attr['p']
 
     def __activate_nodes_in_seed_sets__(self, graph, agents):
@@ -81,12 +87,12 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             for u in agent.seed:
                 if not self.sim_graph.has_node(u):
                     self.__add_node__(graph, u)
-                im.activate_node(self.sim_graph, u, agent)
+                im.activate_node_in_simulation_graph(graph, self.sim_graph, u, agent)
                 self.sim_graph.nodes[u]['last_activation_time'] = self.current_time
                 self.__add_node_to_the_stack__(u)
                 self.__update_prob_sum_trusted__(graph, u, agent.name)
 
-    def __reverse_operations__(self):
+    def __reverse_operations__(self, graph):
         # Reset the prob_sum of the nodes that have been activated
         stack_active_nodes = self.sim_graph.graph['stack_active_nodes']
         while len(stack_active_nodes) > 0:
@@ -120,14 +126,8 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
     def __quiescence_function__(self, graph, node):
         weight_sum = 0
         for u in self.__distrusted_in_neighbors_same_campaign__(node):
-            weight_sum += math.fabs(graph.edges[u, node]['p'])
-        try:
-            return graph.nodes[node]['quiescence_time'] + math.exp(self._lambda * weight_sum)
-        except OverflowError:
-            print(self._lambda)
-            print(weight_sum)
-            print(self._lambda * weight_sum)
-            print(graph.nodes[node]['quiescence_time'])
+            weight_sum += math.fabs(self.distrust_graph.edges[u, node]['p'])
+        return graph.nodes[node]['quiescence_time'] + math.exp(self._lambda * weight_sum)
 
     def __activation_threshold_function__(self, node, time):
         theta_v = self.sim_graph.nodes[node]['threshold']
@@ -154,7 +154,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         self.sim_graph.nodes[node]['quiescence_value'] -= 1
         return self.sim_graph.nodes[node]['quiescence_value'] <= 0
 
-    def __check_quiescent_nodes__(self, quiescent_nodes):
+    def __check_quiescent_nodes__(self, graph, quiescent_nodes):
         """
         Check if any quiescent nodes has expired their quiescence state
         """
@@ -163,13 +163,13 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         while i > 0:
             q = quiescent_nodes[i]
             if self.__quiescence_expired__(q):
-                im.activate_node(self.sim_graph, q, self.sim_graph.nodes[q]['agent'])
+                im.activate_node_in_simulation_graph(graph, self.sim_graph, q, self.sim_graph.nodes[q]['agent'])
                 self.sim_graph.nodes[q]['last_activation_time'] = self.current_time
                 newly_activated.add(quiescent_nodes.pop(i))
             i -= 1
         return newly_activated
 
-    def __check_change_campaign__(self, node, agents):
+    def __check_change_campaign__(self, graph, node, agents):
         """
         Check if the node should change the agent
         and if so, change it and return True
@@ -185,16 +185,16 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
                 if agent.name == max_agent_name:
                     new_agent = agent
                     break
-            self.sim_graph.nodes[node]['agent'] = new_agent
             self.sim_graph.nodes[node]['last_activation_time'] = self.current_time
             # Update the prob_sum_trusted dict
-            self.__redistribute_prob_sum_trusted__(node, old_agent, new_agent)
+            self.__redistribute_prob_sum_trusted__(graph, node, old_agent, new_agent)
             return True
         return False
 
     def __build_trusted_inactive_out_edges__(self, graph, u):
         inactive_out_edges = []
-        for (_, v, attr) in self.trust_graph.out_edges(u, data=True):
+        for (_, v) in self.trust_graph.out_edges(u):
+            attr = graph.get_edge_data(u, v)
             if not self.sim_graph.has_node(v):
                 # If not in the simulation graph, is not active
                 # because the node has not been reached yet
@@ -209,11 +209,11 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
                 inactive_out_edges.append((u, v, attr))
         return inactive_out_edges
 
-    def __check_deactivated_nodes__(self, active_set, seed_sets):
+    def __check_deactivated_nodes__(self, graph, active_set, seed_sets, newly_activated):
         """
         This model does not have a state-transition rule that deactivates nodes (Semi-Progressive)
         """
-        pass
+        return newly_activated
 
     def activate(self, graph, agents):
         self.current_time = 0
@@ -241,7 +241,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             self.__compute_quiescence_values__(graph, quiescent_nodes)
             self.__extend_quiescence_stack__(quiescent_nodes)
             # R2 state-transition rule
-            newly_activated = self.__check_quiescent_nodes__(quiescent_nodes)
+            newly_activated = self.__check_quiescent_nodes__(graph, quiescent_nodes)
             active_set.update(newly_activated)
             for u in newly_activated:
                 self.__update_prob_sum_trusted__(graph, u, self.sim_graph.nodes[u]['agent'].name)
@@ -249,11 +249,11 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             for u in active_set:
                 if u in seed_sets:
                     continue
-                if u not in newly_activated and self.__check_change_campaign__(u, agents):
+                if u not in newly_activated and self.__check_change_campaign__(graph, u, agents):
                     newly_activated.add(u)
             # R4 state-transition rule (implemented in subclass npF2DLT)
-            self.__check_deactivated_nodes__(active_set, seed_sets)
+            newly_activated = self.__check_deactivated_nodes__(graph, active_set, seed_sets, newly_activated)
             self.current_time += 1
         result = self.__group_by_agent__(self.sim_graph, active_set)
-        self.__reverse_operations__()
+        self.__reverse_operations__(graph)
         return result
