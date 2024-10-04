@@ -10,7 +10,7 @@ class Server:
         self.app = Dash(__name__)
         dict_of_agents = self.__initialize_agents__()
         self.G = read_adjacency_matrix('../data/network.txt')
-        self.im_instance  = im.InfluenceMaximization(input_graph=self.G, agents=dict_of_agents, alg='tim',
+        self.im_instance  = im.InfluenceMaximization(input_graph=self.G, agents=dict_of_agents, alg='static_greedy',
                                                      diff_model='ic', inf_prob=None, r=100,
                                                      insert_opinion=False, endorsement_policy='random')
         self.agents=self.im_instance.get_agents()
