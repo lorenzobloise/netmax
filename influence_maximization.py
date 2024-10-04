@@ -92,15 +92,15 @@ def put_node_into_quiescent(graph, node, agent: Agent):
     if 'contacted_by' in graph.nodes[node]:
         del graph.nodes[node]['contacted_by']
 
-def transition_nodes_into_quiescent_state(graph, endorsement_policy, pending_nodes_list):
+def transition_nodes_into_quiescent_state(sim_graph, endorsement_policy, pending_nodes_list):
     """
     Method used into the F2DLT diffusion models
     """
     quiescent_nodes = []
     for node in pending_nodes_list:
-        contacted_by = graph.nodes[node]['contacted_by']
-        chosen_agent = endorsement_policy.choose_agent(node, graph) if len(contacted_by) > 1 else next(iter(contacted_by))
-        put_node_into_quiescent(graph, node, chosen_agent)
+        contacted_by = sim_graph.nodes[node]['contacted_by']
+        chosen_agent = endorsement_policy.choose_agent(node, sim_graph) if len(contacted_by) > 1 else next(iter(contacted_by))
+        put_node_into_quiescent(sim_graph, node, chosen_agent)
         quiescent_nodes.append(node)
     return quiescent_nodes
 

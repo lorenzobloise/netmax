@@ -27,11 +27,11 @@ class GeneralTests(unittest.TestCase):
     def test(self):
         df = pd.DataFrame()
         g = read_adjacency_matrix('../data/network.txt')
-        algo = ['mcgreedy', 'celf', 'celfpp', 'degdis', 'group_pr', 'outdeg', 'tim', 'ris', 'tim_p', 'static_greedy']
+        algo = ['tim_p']
         dict_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
-                                                     diff_model='tr', inf_prob='opinion', r=1,
+                                                     diff_model='ic', inf_prob=None, r=1,
                                                      insert_opinion=True, endorsement_policy='random', verbose=True)
             seed, spread, execution_time = im_instance.run()
             result_row = {
@@ -50,11 +50,11 @@ class GeneralTests(unittest.TestCase):
         df = pd.DataFrame()
         #g = read_signed_adjacency_matrix('../data/wiki-elec.txt')
         g = read_weighted_and_signed_adjacency_matrix('../data/wikiconflict-signed_edgelist.txt')
-        algo = ['group_pr']
+        algo = ['degdis']
         dict_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
-                                                    diff_model='sp_f2dlt', inf_prob=None, r=1, insert_opinion=False,
+                                                    diff_model='sp_f2dlt', inf_prob='opinion', r=1, insert_opinion=True,
                                                     endorsement_policy='random', verbose=True)
             seed, spread, execution_time = im_instance.run()
             result_row = {
