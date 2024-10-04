@@ -29,7 +29,7 @@ class IndependentCascade(DiffusionModel):
             for node in agent.seed:
                 if not self.sim_graph.has_node(node):
                     self.__add_node__(graph, node)
-                im.activate_node(self.sim_graph, node, agent)
+                im.activate_node_in_simulation_graph(graph, self.sim_graph, node, agent)
                 self.__add_node_to_the_stack__(node)
                 active_set.add(node)
         return list(active_set)
@@ -52,8 +52,8 @@ class IndependentCascade(DiffusionModel):
                         if v not in pending_nodes:
                             pending_nodes.append(v)
             self.__extend_stack__(pending_nodes)
-            newly_activated = im.manage_pending_nodes(self.sim_graph, self.endorsement_policy, pending_nodes)
+            newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
         result = self.__group_by_agent__(self.sim_graph, active_set)
-        self.__reverse_operations__()
+        self.__reverse_operations__(graph)
         return result

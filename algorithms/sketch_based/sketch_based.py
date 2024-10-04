@@ -16,6 +16,7 @@ class SketchBasedAlgorithm(Algorithm):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
         self.transposed_graph = self.graph.reverse(copy=True)
         self.diff_model_transposed = self.diff_model.__copy__()
+        self.diff_model_transposed.preprocess_data(self.transposed_graph)
 
     def __generate_sketch__(self):
         """

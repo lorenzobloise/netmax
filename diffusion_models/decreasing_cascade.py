@@ -34,7 +34,7 @@ class DecreasingCascade(DiffusionModel):
             for u in agent.seed:
                 if u not in self.sim_graph.nodes:
                     self.__add_node__(graph, u)
-                im.activate_node(self.sim_graph, u, agent)
+                im.activate_node_in_simulation_graph(graph, self.sim_graph, u, agent)
                 active_set.append(u)
                 self.__add_node_to_the_stack__(u)
                 if 'trials' in self.sim_graph.nodes[u]:
@@ -42,11 +42,11 @@ class DecreasingCascade(DiffusionModel):
                     self.sim_graph.graph['stack_trials'].add(u)
         return active_set
 
-    def __reverse_operations__(self):
+    def __reverse_operations__(self,graph):
         """
         This method empties the stack of the active nodes
         """
-        super().__reverse_operations__()
+        super().__reverse_operations__(graph)
         stack_trials = self.sim_graph.graph['stack_trials']
         while len(stack_trials) > 0:
             node = stack_trials.pop()
@@ -73,8 +73,8 @@ class DecreasingCascade(DiffusionModel):
                     else:
                         self.sim_graph.nodes[v]['trials'] = trials + 1
             self.__extend_stack__(pending_nodes)
-            newly_activated = im.manage_pending_nodes(self.sim_graph, self.endorsement_policy, pending_nodes)
+            newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
         result = self.__group_by_agent__(self.sim_graph, active_set)
-        self.__reverse_operations__()
+        self.__reverse_operations__(graph)
         return result

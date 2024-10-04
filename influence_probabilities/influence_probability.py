@@ -3,7 +3,7 @@ class InfluenceProbability:
     def get_probability(self, graph, u, v):
         raise NotImplementedError("This method must be implemented by subclasses")
 
-    def update_probability(self, graph, u):
+    def update_probability(self, graph, u, agent):
         """
         This method is responsible for updating the dynamic features and the related influence probability after a node is activated.
         The only subclasses that overrides this method are the ones that base the probability distribution on dynamic features, such as the opinion of the nodes.

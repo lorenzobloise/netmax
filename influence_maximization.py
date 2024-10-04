@@ -21,7 +21,23 @@ def activate_node(graph, node, agent: Agent):
     if 'contacted_by' in graph.nodes[node]:
         del graph.nodes[node]['contacted_by']
     if graph.graph['inf_prob'] is not None:
-        graph.graph['inf_prob'].update_probability(graph, node)
+        graph.graph['inf_prob'].update_probability(graph, node, agent)
+
+def activate_node_in_simulation_graph(graph, sim_graph, node, agent: Agent):
+    """
+    Activate a node in the graph by setting its status to 'ACTIVE' and the agent name that activated it.
+    :param graph: The original graph (networkx.DiGraph).
+    :param sim_graph: The simulation graph (networkx.DiGraph).
+    :param node: The node to activate.
+    :param agent: The agent that activates the node.
+    Activate node in the simulation graph but update (temporarily) the influence probabilities in the original graph.
+    """
+    sim_graph.nodes[node]['agent'] = agent
+    sim_graph.nodes[node]['status'] = 'ACTIVE'
+    if 'contacted_by' in sim_graph.nodes[node]:
+        del sim_graph.nodes[node]['contacted_by']
+    if graph.graph['inf_prob'] is not None:
+        graph.graph['inf_prob'].update_probability(graph, node, agent)
 
 def deactivate_node(graph, node):
     """
@@ -33,7 +49,21 @@ def deactivate_node(graph, node):
     if 'agent' in graph.nodes[node].keys():
         del graph.nodes[node]['agent']
     if graph.graph['inf_prob'] is not None:
-        graph.graph['inf_prob'].update_probability(graph, node)
+        graph.graph['inf_prob'].restore_probability(graph, node)
+
+def deactivate_node_in_simulation_graph(graph, sim_graph, node):
+    """
+    Deactivate a node in the graph by setting its status to 'INACTIVE' and deleting the agent name.
+    :param graph: The input graph (networkx.DiGraph).
+    :param sim_graph: The simulation graph (networkx.DiGraph).
+    :param node: The node to deactivate.
+    Deactivate node in the simulation graph but restore (temporarily) the influence probabilities in the original graph.
+    """
+    sim_graph.nodes[node]['status'] = 'INACTIVE'
+    if 'agent' in sim_graph.nodes[node].keys():
+        del sim_graph.nodes[node]['agent']
+    if graph.graph['inf_prob'] is not None:
+        graph.graph['inf_prob'].restore_probability(graph, node)
 
 def contact_node(graph, node, agent: Agent):
     """
@@ -47,12 +77,12 @@ def contact_node(graph, node, agent: Agent):
         graph.nodes[node]['contacted_by'] = set()
     graph.nodes[node]['contacted_by'].add(agent)
 
-def manage_pending_nodes(graph, endorsement_policy, pending_nodes_list):
+def manage_pending_nodes(graph, sim_graph, endorsement_policy, pending_nodes_list):
     newly_activated = []
     for node in pending_nodes_list:
-        contacted_by = graph.nodes[node]['contacted_by']
-        chosen_agent = endorsement_policy.choose_agent(node, graph) if len(contacted_by) > 1 else next(iter(contacted_by))
-        activate_node(graph, node, chosen_agent)
+        contacted_by = sim_graph.nodes[node]['contacted_by']
+        chosen_agent = endorsement_policy.choose_agent(node, sim_graph) if len(contacted_by) > 1 else next(iter(contacted_by))
+        activate_node_in_simulation_graph(graph, sim_graph, node, chosen_agent)
         newly_activated.append(node)
     return newly_activated
 

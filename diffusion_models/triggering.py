@@ -38,11 +38,10 @@ class Triggering(DiffusionModel):
             for node in agent.seed:
                 if not self.sim_graph.has_node(node):
                     self.__add_node__(graph, node)
-                im.activate_node(self.sim_graph, node, agent)
+                im.activate_node_in_simulation_graph(graph, self.sim_graph, node, agent)
                 self.__add_node_to_the_stack__(node)
                 active_set.add(node)
         return list(active_set)
-
 
     def activate(self, graph, agents):
         if self.sim_graph is None:
@@ -66,8 +65,8 @@ class Triggering(DiffusionModel):
                         im.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
                         pending_nodes.add(v)
             self.__extend_stack__(pending_nodes)
-            newly_activated = im.manage_pending_nodes(self.sim_graph, self.endorsement_policy, list(pending_nodes))
+            newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, list(pending_nodes))
             active_set.extend(newly_activated)
         result = self.__group_by_agent__(self.sim_graph, active_set)
-        self.__reverse_operations__()
+        self.__reverse_operations__(graph)
         return result
