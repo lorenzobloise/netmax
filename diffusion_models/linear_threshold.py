@@ -63,13 +63,13 @@ class LinearThreshold(DiffusionModel):
             for u in agent.seed:
                 if not self.sim_graph.has_node(u):
                     self.__add_node__(graph, u)
-                im.activate_node(self.sim_graph, u, agent)
+                im.activate_node_in_simulation_graph(graph, self.sim_graph, u, agent)
                 self.__add_node_to_the_stack__(u)
                 self.__update_prob_sum__(graph, u, agent.name)
 
-    def __reverse_operations__(self):
+    def __reverse_operations__(self, graph):
         # Reset the prob_sum of the nodes that have been activated
-        super().__reverse_operations__()
+        super().__reverse_operations__(graph)
         stack_prob_sum = self.sim_graph.graph['stack_prob_sum']
         while stack_prob_sum:
             node = stack_prob_sum.pop()
@@ -77,8 +77,8 @@ class LinearThreshold(DiffusionModel):
 
     def activate(self, graph, agents):
         if self.sim_graph is None:
-            self.__initialize_sim_graph__(graph,agents)
-        self.__activate_nodes_in_seed_sets__(graph,agents)
+            self.__initialize_sim_graph__(graph, agents)
+        self.__activate_nodes_in_seed_sets__(graph, agents)
         active_set = im.active_nodes(self.sim_graph)
         newly_activated = list(active_set)
         while len(newly_activated) > 0:
@@ -93,10 +93,10 @@ class LinearThreshold(DiffusionModel):
                             pending_nodes.append(v)
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
             self.__extend_stack__(pending_nodes)
-            newly_activated = im.manage_pending_nodes(self.sim_graph, self.endorsement_policy, pending_nodes)
+            newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
             for u in newly_activated:
                 self.__update_prob_sum__(graph, u, self.sim_graph.nodes[u]['agent'].name)
         result = self.__group_by_agent__(self.sim_graph, active_set)
-        self.__reverse_operations__()
+        self.__reverse_operations__(graph)
         return result

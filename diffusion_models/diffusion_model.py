@@ -44,14 +44,14 @@ class DiffusionModel:
         self.sim_graph.graph['stack_active_nodes'] = set()
         self.sim_graph.graph['stack_inf_prob']=set()
 
-    def __reverse_operations__(self):
+    def __reverse_operations__(self, graph):
         """
         This method empties the stack of the active nodes
         """
         stack_active_nodes = self.sim_graph.graph['stack_active_nodes']
         while len(stack_active_nodes) > 0:
             node = stack_active_nodes.pop()
-            im.deactivate_node(self.sim_graph, node)
+            im.deactivate_node_in_simulation_graph(graph,self.sim_graph, node)
 
     def __build_inactive_out_edges__(self, graph, u):
         inactive_out_edges = []
