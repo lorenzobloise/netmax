@@ -76,11 +76,13 @@ class LinearThreshold(DiffusionModel):
             self.sim_graph.nodes[node]['prob_sum'] = dict()
 
     def activate(self, graph, agents):
+        self.__reset_parameters__()
         if self.sim_graph is None:
             self.__initialize_sim_graph__(graph, agents)
         self.__activate_nodes_in_seed_sets__(graph, agents)
         active_set = im.active_nodes(self.sim_graph)
         newly_activated = list(active_set)
+        self.__register_history__(active_set, {})
         while len(newly_activated) > 0:
             pending_nodes = []
             for u in newly_activated:
@@ -93,10 +95,12 @@ class LinearThreshold(DiffusionModel):
                             pending_nodes.append(v)
             # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
             self.__extend_stack__(pending_nodes)
+            self.__register_history__(None, pending_nodes)
             newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
+            self.__register_history__(active_set, {})
             for u in newly_activated:
                 self.__update_prob_sum__(graph, u, self.sim_graph.nodes[u]['agent'].name)
-        result = self.__group_by_agent__(self.sim_graph, active_set)
+        result = self.__group_active_set_by_agent__(active_set)
         self.__reverse_operations__(graph)
         return result
