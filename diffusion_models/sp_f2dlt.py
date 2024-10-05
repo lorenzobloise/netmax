@@ -1,7 +1,10 @@
+from xmlrpc.client import Error
+
 from diffusion_models.diffusion_model import DiffusionModel
 import random
 import math
 import influence_maximization as im
+import copy
 
 class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
     """
@@ -22,6 +25,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         self.T = 30
         self.trust_graph = None
         self.distrust_graph = None
+        self.last_quiescent_set = None
 
     def __copy__(self):
         result = SemiProgressiveFriendFoeDynamicLinearThreshold(self.endorsement_policy)
@@ -215,7 +219,29 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         """
         return newly_activated
 
+    def __register_history__(self, active_set, pending_set):
+        raise Exception("This method should not be called in this diffusion model, use __register_history_with_quiescent_nodes__ instead")
+
+    def __register_history_with_quiescent_nodes__(self, active_set, pending_set, quiescent_set):
+        if active_set is not None:
+            self.last_active_set=self.__group_active_set_by_agent__(active_set)
+        if quiescent_set is not None:
+            self.last_quiescent_set = self.__group_quiescent_set_by_agent__(quiescent_set)
+        self.history[self.iteration_id] = (self.last_active_set,  self.__build_pending_set_for_history__(pending_set), self.last_quiescent_set)
+        self.iteration_id += 1
+
+    def __group_quiescent_set_by_agent__(self, quiescent_set):
+        dict_result = {}
+        for u in quiescent_set:
+            curr_agent = self.sim_graph.nodes[u]['agent'].name
+            if curr_agent in dict_result:
+                dict_result[curr_agent].append(u)
+            else:
+                dict_result[curr_agent] = [u]
+        return dict_result
+
     def activate(self, graph, agents):
+        self.__reset_parameters__()
         self.current_time = 0
         if self.sim_graph is None:
             self.__initialize_sim_graph__(graph, agents)
@@ -225,6 +251,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         seed_sets = set(active_set.copy())
         newly_activated = set(active_set.copy())
         quiescent_nodes = []
+        self.__register_history_with_quiescent_nodes__(active_set, {}, {})
         while not (self.__no_more_activation_attempts__(newly_activated, quiescent_nodes) or self.__time_expired__()):
             pending_nodes = set()
             # R1 state-transition rule
@@ -237,12 +264,15 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
                         pending_nodes.add(v)
             # Contacted inactive nodes choose which campaign actually determines their transition in the quiescent state
             self.__extend_stack__(pending_nodes)
+            self.__register_history_with_quiescent_nodes__(active_set, pending_nodes, None)
             quiescent_nodes.extend(im.transition_nodes_into_quiescent_state(self.sim_graph, self.endorsement_policy, pending_nodes))
             self.__compute_quiescence_values__(graph, quiescent_nodes)
             self.__extend_quiescence_stack__(quiescent_nodes)
+            self.__register_history_with_quiescent_nodes__(None, {}, quiescent_nodes)
             # R2 state-transition rule
             newly_activated = self.__check_quiescent_nodes__(graph, quiescent_nodes)
             active_set.update(newly_activated)
+            self.__register_history_with_quiescent_nodes__(active_set, {}, quiescent_nodes)
             for u in newly_activated:
                 self.__update_prob_sum_trusted__(graph, u, self.sim_graph.nodes[u]['agent'].name)
             # R3 state-transition rule
@@ -254,6 +284,6 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             # R4 state-transition rule (implemented in subclass npF2DLT)
             newly_activated = self.__check_deactivated_nodes__(graph, active_set, seed_sets, newly_activated)
             self.current_time += 1
-        result = self.__group_by_agent__(self.sim_graph, active_set)
+        result = self.__group_active_set_by_agent__(active_set)
         self.__reverse_operations__(graph)
         return result

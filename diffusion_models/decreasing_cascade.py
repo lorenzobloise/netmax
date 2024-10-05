@@ -53,10 +53,12 @@ class DecreasingCascade(DiffusionModel):
             self.sim_graph.nodes[node]['trials'] = 0
 
     def activate(self, graph, agents):
+        self.__reset_parameters__()
         if self.sim_graph is None:
             self.__initialize_sim_graph__(graph, agents)
         active_set = self.__activate__initial_nodes__(graph, agents)
         newly_activated = list(active_set)
+        self.__register_history__(active_set, {})
         while len(newly_activated) > 0:
             pending_nodes = []
             for u in newly_activated:
@@ -73,8 +75,10 @@ class DecreasingCascade(DiffusionModel):
                     else:
                         self.sim_graph.nodes[v]['trials'] = trials + 1
             self.__extend_stack__(pending_nodes)
+            self.__register_history__(None, pending_nodes)
             newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
-        result = self.__group_by_agent__(self.sim_graph, active_set)
+            self.__register_history__(active_set, {})
+        result = self.__group_active_set_by_agent__(active_set)
         self.__reverse_operations__(graph)
         return result

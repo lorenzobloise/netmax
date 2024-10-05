@@ -1,3 +1,4 @@
+import copy
 import random
 import networkx as nx
 import utils
@@ -275,6 +276,7 @@ class InfluenceMaximization:
         self.logger.setLevel(logging.INFO)
         if not self.verbose:
             self.logger.propagate = False
+        self.history = {} # Dictionary containing the history of the states of agents during a game <round_number: agents>
 
     def __check_params__(self, diff_model_name, alg_name, inf_prob_name, endorsement_policy_name):
         """
@@ -359,13 +361,17 @@ class InfluenceMaximization:
             agent.seed.append(node)
             activate_node(self.graph, node, agent)
 
+    def __register_history__(self, round_id, current_state):
+        self.history[round_id] = copy.deepcopy(current_state)
+
     def run(self):
         start_time = time.time()
         alg = self.alg(graph=self.graph, agents=self.agents, curr_agent_id=None, budget=1, diff_model=self.diff_model, r=self.r)
         self.logger.info(f"Starting influence maximization process with algorithm {alg.__class__.__name__}")
-        round_counter = 0
         if self.first_random_seed:
             self.__insert_first_random_seed__()
+        self.__register_history__(0, self.agents) # Register the initial state
+        round_counter = 1
         while not self.__game_over__():
             self.logger.info(f"Round {round_counter} has started")
             for agent in self.__get_agents_not_fulfilled__():
@@ -380,6 +386,7 @@ class InfluenceMaximization:
                 self.logger.debug(f"Spread of agent {agent.name} updated with {agent.spread}")
                 agent.seed.extend(partial_seed)
                 self.logger.debug(f"Seed set of agent {agent.name} updated with {partial_seed[0]} node")
+            self.__register_history__(round_counter, self.agents) # Register the state of the agents at the end of the round
             round_counter += 1
         self.logger.info(f"Game over")
         execution_time = time.time() - start_time
