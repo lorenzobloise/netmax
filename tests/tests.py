@@ -27,11 +27,11 @@ class GeneralTests(unittest.TestCase):
     def test(self):
         df = pd.DataFrame()
         g = read_adjacency_matrix('../data/network.txt')
-        algo = ['tim_p']
+        algo = ['celfpp']
         dict_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
-                                                     diff_model='ic', inf_prob=None, r=1,
+                                                     diff_model='ic', inf_prob='opinion', first_random_seed=True, r=1,
                                                      insert_opinion=True, endorsement_policy='random', verbose=True)
             seed, spread, execution_time = im_instance.run()
             result_row = {

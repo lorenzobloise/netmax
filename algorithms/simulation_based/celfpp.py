@@ -4,6 +4,9 @@ from heapdict import heapdict
 import influence_maximization as im
 from tqdm import tqdm
 
+from influence_probabilities import OpinionBased
+
+
 class CELF_PP(SimulationBasedAlgorithm):
     """
     Paper: Goyal et al. - "CELF++: Optimizing the Greedy Algorithm for Influence Maximization in Social Networks"
@@ -39,14 +42,14 @@ class CELF_PP(SimulationBasedAlgorithm):
 
     def __init__(self, graph, agents, curr_agent_id, budget, diff_model, r):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
-        self.queues = None
+        self.queues = {}
         self.idx = 0
         self.last_seed = {}
         self.curr_best = {}
 
     def __initialize_queues__(self, sim_graph, agents_copy):
-        self.queues = {self.curr_agent_id: heapdict()}
-        for node in tqdm(sim_graph.nodes, desc="Initializing queues"):
+        self.queues[self.curr_agent_id] =  heapdict()
+        for node in tqdm(im.inactive_nodes(sim_graph), desc="Initializing queues"):
             node_data=CELF_PP.Node(node)
             node_data.mg1 = self.__do_simulation__(sim_graph, agents_copy,[node_data.node])
             node_data.prev_best = None if self.curr_agent_id not in self.curr_best else self.curr_best[self.curr_agent_id]
@@ -56,19 +59,19 @@ class CELF_PP(SimulationBasedAlgorithm):
             else:
                 self.curr_best[self.curr_agent_id] = node_data
             self.__add_element_to_the_queue__(node_data)
-        # In the first iteration, the first agent's queue is replicated for all agents,
-        # so we make a deep copy of the queue for all agents
-        for agent in self.agents:
-            if agent.id == self.curr_agent_id:
-                continue
-            #Manage the deep copy of the curr_best
-            self.curr_best[agent.id] = self.__get_curr_best__().__deepcopy__()
-            #Manage the deep copy of the queue
-            q_copy = heapdict()
-            for node_data, neg_mg1 in list(self.queues[self.curr_agent_id].items()):
-                node_data_copy = node_data.__deepcopy__()
-                q_copy[node_data_copy] = neg_mg1
-            self.queues[agent.id] = q_copy
+        if self.graph.graph['inf_prob'].__class__ != OpinionBased and len(agents_copy[self.curr_agent_id].seed) == 0:
+            # If these conditions are satisfied, replicate the first agent's queue for each agent
+            for agent in self.agents:
+                if agent.id == self.curr_agent_id:
+                    continue
+                #Manage the deep copy of the curr_best
+                self.curr_best[agent.id] = self.__get_curr_best__().__deepcopy__()
+                #Manage the deep copy of the queue
+                q_copy = heapdict()
+                for node_data, neg_mg1 in list(self.queues[self.curr_agent_id].items()):
+                    node_data_copy = node_data.__deepcopy__()
+                    q_copy[node_data_copy] = neg_mg1
+                self.queues[agent.id] = q_copy
 
     def __add_element_to_the_queue__(self, node_data):
         q = self.queues[self.curr_agent_id]
@@ -82,6 +85,9 @@ class CELF_PP(SimulationBasedAlgorithm):
     def __remove_element_from_the_queue__(self, node_data):
         for agent in self.agents:
             curr_id = agent.id
+            if not curr_id in self.queues:
+                continue
+
             # Get the queue of the agent
             q = self.queues[curr_id]
             # Remove the node from the queue
@@ -131,7 +137,7 @@ class CELF_PP(SimulationBasedAlgorithm):
         agents_copy = copy.deepcopy(self.agents)
         # If the queues are not initialized, initialize them, then do the first iteration pass of CELF++
         # TODO: manage opinions by initializing different queues for each agents instead of merely copying
-        if self.queues is None:
+        if self.curr_agent_id not in self.queues:
             self.__initialize_queues__(self.graph, agents_copy)
         # Other iterations
         progress_bar = tqdm(total=self.budget, desc='Choosing the next node')

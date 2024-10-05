@@ -3,6 +3,7 @@ from algorithms.simulation_based.simulation_based import SimulationBasedAlgorith
 import copy
 import influence_maximization as im
 from tqdm import tqdm
+from influence_probabilities import OpinionBased
 
 class CELF(SimulationBasedAlgorithm):
 
@@ -10,23 +11,26 @@ class CELF(SimulationBasedAlgorithm):
 
     def __init__(self, graph, agents, curr_agent_id, budget, diff_model, r):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
-        self.queues = None # Dictionary {agent_id: queue}
+        self.queues = {agent.id: heapdict() for agent in self.agents} # Dictionary {agent_id: queue}
 
     def __first_monte_carlo__(self, graph, agents):
         """
         :return: dictionary of marginal gains of each node sorted in descending order by marginal gain
         """
-        self.queues = {agent.id: heapdict() for agent in agents}
         for u in tqdm(im.inactive_nodes(graph), desc="Choosing first node and initializing queues"):
             agents[self.curr_agent_id].seed.append(u)
             spreads = im.simulation(graph=graph, diff_model=self.diff_model, agents=agents, r=self.r)
             spread_value = spreads[self.agents[self.curr_agent_id].name]
-            # TODO: manage opinions by initializing different queues for each agents instead of merely copying
-            for a in agents:
-                # We did the simulation from the perspective of the current agent
-                # But this is the first simulation, so the seed set is empty
-                # and the spread value is equal for all agents
-                q = self.queues[a.id]
+            if self.graph.graph['inf_prob'].__class__ != OpinionBased and len(agents[self.curr_agent_id].seed) == 1:
+                # Generate the same queue for each agent
+                for a in agents:
+                    # We did the simulation from the perspective of the current agent
+                    # But this is the first simulation, so the seed set is empty
+                    # and the spread value is equal for all agents
+                    q = self.queues[a.id]
+                    q[u] = -spread_value
+            else: # Generate only the current agent's queue
+                q = self.queues[self.curr_agent_id]
                 q[u] = -spread_value
             # We appended the node to the seed set, now we remove it
             agents[self.curr_agent_id].seed = agents[self.curr_agent_id].seed[:-1]
@@ -77,12 +81,9 @@ class CELF(SimulationBasedAlgorithm):
             else:
                 agent.spread = 0
 
-    def __update_marginal_gains__(self, agents):
-        pass # TODO
-
     def run(self):
         agents_copy = copy.deepcopy(self.agents)
-        if self.queues is None:
+        if len(self.queues[self.curr_agent_id]) == 0:
             self.__first_monte_carlo__(graph=self.graph, agents=agents_copy)
             top_node, top_marginal_gain = self.__pop_top_node_and_marginal_gain__()
             spreads = {}
@@ -104,13 +105,6 @@ class CELF(SimulationBasedAlgorithm):
                     check = True
             top_node, top_marginal_gain = self.__pop_top_node_and_marginal_gain__()
             self.__update_spreads__(agents_copy, updated_spreads)
-            self.__update_marginal_gains__(agents_copy)
-            #agents_copy[self.curr_agent_id].spread += top_marginal_gain
             agents_copy[self.curr_agent_id].seed.append(top_node)
         result_seed_set = agents_copy[self.curr_agent_id].seed[:-self.budget] if self.budget > 1 else [agents_copy[self.curr_agent_id].seed[-1]]
-        #return result_seed_set, agents_copy[self.curr_agent_id].spread
         return result_seed_set, {a.name: a.spread for a in agents_copy}
-
-
-
-

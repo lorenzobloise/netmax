@@ -1,3 +1,4 @@
+import random
 import networkx as nx
 import utils
 from agent import Agent
@@ -222,7 +223,7 @@ class InfluenceMaximization:
 
     def __init__(self, input_graph: nx.DiGraph, agents: dict,
                  alg: str, diff_model, inf_prob: str = None, endorsement_policy: str = 'random',
-                 insert_opinion: bool = False, inv_edges: bool = False, r: int = 100, verbose: bool = False):
+                 insert_opinion: bool = False, inv_edges: bool = False, first_random_seed: bool = False, r: int = 100, verbose: bool = False):
         """
         Create an instance of the InfluenceMaximization class.
         :param input_graph: A directed graph representing the network (of type networkx.DiGraph).
@@ -233,11 +234,17 @@ class InfluenceMaximization:
         :param endorsement_policy: The policy that nodes use to choose which agent to endorse when they have been contacted by more than one agent. The framework implements different endorsement policies, default is 'random'.
         :param insert_opinion: True if the nodes do not contain any information about their opinion on the agents, False otherwise or if the opinion is not used.
         :param inv_edges: A boolean indicating whether to invert the edges of the graph.
+        :param first_random_seed: A boolean indicating whether to insert a first node (chosen random) in the seed set of every agent.
         :param r: Number of simulations to execute. Default is 100.
         :param verbose: If True sets the logging level to INFO, otherwise displays only the minimal information.
         """
         self.graph = input_graph.copy()
-        self.agents = [Agent(list(agents.keys())[idx], list(agents.values())[idx], idx) for idx in range(len(agents))]
+        # Build agents list
+        self.agents = []
+        for idx, agent_name in enumerate(agents):
+            if agents[agent_name] <= 0:
+                raise ValueError(f"Agents budgets must be positive")
+            self.agents.append(Agent(list(agents.keys())[idx], list(agents.values())[idx], idx))
         self.verbose = verbose
         # Check and set the diffusion model, the algorithm and the influence probabilities
         diff_model_class, alg_class, inf_prob_class, endorsement_policy_class = self.__check_params__(diff_model, alg, inf_prob, endorsement_policy)
@@ -246,13 +253,14 @@ class InfluenceMaximization:
         self.diff_model = diff_model_class(self.endorsement_policy)
         # Set the parameters
         self.insert_opinion = insert_opinion
+        self.first_random_seed = first_random_seed
         self.inv_edges = inv_edges
         # Pre-process the graph, removing isolated nodes that do not contribute to influence diffusion process
         self.mapping = self.__preprocess__()
         # Check if the graph is compatible (the sum of the budgets must not exceed the number of nodes in the graph)
         budget = sum([agent.budget for agent in self.agents])
         n_nodes = len(self.graph.nodes)
-        if sum([agent.budget for agent in self.agents]) > len(self.graph.nodes):
+        if sum([agent.budget for agent in self.agents]) > len(self.graph.nodes) + 1 * self.first_random_seed * len(self.agents):
             raise ValueError(
                 f"The budget ({budget}) exceeds the number of nodes in the graph ({n_nodes}) by {budget - n_nodes}")
         self.inverse_mapping = {new_label: old_label for (old_label, new_label) in self.mapping.items()}
@@ -326,7 +334,7 @@ class InfluenceMaximization:
         """
         Check if the budget of an agent is fulfilled.
         """
-        return len(agent.seed) >= agent.budget
+        return len(agent.seed) >= agent.budget + 1 * self.first_random_seed
 
     def __get_agents_not_fulfilled__(self):
         """
@@ -342,11 +350,22 @@ class InfluenceMaximization:
         """
         return all([self.__budget_fulfilled__(a) for a in self.agents])
 
+    def __insert_first_random_seed__(self):
+        """
+        If the parameter first_random_seed is True, the first seed of each agent is randomly chosen.
+        """
+        for agent in self.agents:
+            node = random.choice(list(self.graph.nodes))
+            agent.seed.append(node)
+            activate_node(self.graph, node, agent)
+
     def run(self):
         start_time = time.time()
         alg = self.alg(graph=self.graph, agents=self.agents, curr_agent_id=None, budget=1, diff_model=self.diff_model, r=self.r)
         self.logger.info(f"Starting influence maximization process with algorithm {alg.__class__.__name__}")
         round_counter = 0
+        if self.first_random_seed:
+            self.__insert_first_random_seed__()
         while not self.__game_over__():
             self.logger.info(f"Round {round_counter} has started")
             for agent in self.__get_agents_not_fulfilled__():
