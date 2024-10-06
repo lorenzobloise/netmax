@@ -16,7 +16,7 @@ class GeneralTests(unittest.TestCase):
         agents = {}
         for i in range(num_agents):
             agent_name = 'Agent_' + str(i)
-            budget = random.randint(10,10)
+            budget = random.randint(5,5)
             agents[agent_name] = budget
         return agents
 
@@ -27,12 +27,12 @@ class GeneralTests(unittest.TestCase):
     def test(self):
         df = pd.DataFrame()
         g = read_adjacency_matrix('../data/network.txt')
-        algo = ['celfpp']
+        algo = ['celf']
         dict_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
-                                                     diff_model='ic', inf_prob='opinion', first_random_seed=True, r=1,
-                                                     insert_opinion=True, endorsement_policy='random', verbose=True)
+                                                     diff_model='lt', inf_prob=None, first_random_seed=False, r=1000,
+                                                     insert_opinion=False, endorsement_policy='random', verbose=True)
             seed, spread, execution_time = im_instance.run()
             result_row = {
                 "algorithm": [a],
@@ -48,13 +48,13 @@ class GeneralTests(unittest.TestCase):
 
     def test_signed_graph(self):
         df = pd.DataFrame()
-        #g = read_signed_adjacency_matrix('../data/wiki-elec.txt')
+        #g = read_signed_adjacency_matrix('../data/network_signed.txt')
         g = read_weighted_and_signed_adjacency_matrix('../data/wikiconflict-signed_edgelist.txt')
         algo = ['degdis']
         dict_of_agents = self.__create_agents__(num_agents=2)
         for a in algo:
             im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
-                                                    diff_model='sp_f2dlt', inf_prob='opinion', r=1, insert_opinion=True,
+                                                    diff_model='sp_f2dlt', inf_prob=None, r=1, insert_opinion=False,
                                                     endorsement_policy='random', verbose=True)
             seed, spread, execution_time = im_instance.run()
             result_row = {
@@ -68,15 +68,28 @@ class GeneralTests(unittest.TestCase):
             df = pd.concat([df, pd.DataFrame(result_row)], ignore_index=True)
             self.reset_agents(list_of_agents)
         print(df)
+        print("---------------------")
+        history = im_instance.diff_model.get_history()
+        new_history = {}
+        for it in history:
+            (active_sets, pending_nodes, quiescent_nodes) = history[it]
+            new_history[it] = (sum([len(a) for a in active_sets.values()]), len(pending_nodes), sum([len(a) for a in quiescent_nodes.values()]))
+        print(new_history)
 
     def test_diffusion_model(self):
-        g = read_weighted_and_signed_adjacency_matrix('../data/wiki-elec_edgelist.txt')
-        dict_of_agents = self.__create_agents__(num_agents=2)
+        g = read_weighted_and_signed_adjacency_matrix('../data/network_signed_edgelist.txt')
+        dict_of_agents = self.__create_agents__(num_agents=1)
         im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg='tim_p',
                                                     diff_model='sp_f2dlt', inf_prob=None, r=1, insert_opinion=False,
                                                     endorsement_policy='random', verbose=True)
-        im_instance.agents[0].seed = [27, 79, 3124, 6100, 68, 345, 6759, 4359, 5977, 1328]
-        im_instance.agents[1].seed = [173, 2872, 5087, 4, 315, 6447, 867, 1095, 1306, 1343]
+        im_instance.agents[0].seed = [im_instance.mapping[x] for x in [9, 11, 14, 18, 31]]
         active_sets = im_instance.diff_model.activate(im_instance.graph, im_instance.agents)
         print(len(active_sets['Agent_0']))
-        print(len(active_sets['Agent_1']))
+        #print(len(active_sets['Agent_1']))
+        print("---------------------")
+        history = im_instance.diff_model.get_history()
+        new_history = {}
+        for it in history:
+            (active_sets, pending_nodes, quiescent_nodes) = history[it]
+            new_history[it] = (sum([len(a) for a in active_sets.values()]), len(pending_nodes), sum([len(a) for a in quiescent_nodes.values()]))
+        print(new_history)

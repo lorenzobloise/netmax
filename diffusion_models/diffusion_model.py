@@ -23,11 +23,14 @@ class DiffusionModel:
                 result.sim_graph.graph[key] = value
         return result
 
+    def get_history(self):
+        return self.history
+
     def __register_history__(self, active_set, pending_set):
         if active_set is not None:
-            active_set = self.__group_active_set_by_agent__(self.sim_graph, active_set)
+            active_set = self.__group_active_set_by_agent__(active_set)
             self.last_active_set = copy.deepcopy(active_set)
-        pending_set = self.__build_pending_set_for_history__(self.sim_graph, pending_set)
+        pending_set = self.__build_pending_set_for_history__(pending_set)
         self.history[self.iteration_id] = (self.last_active_set, pending_set)
         self.iteration_id += 1
 
