@@ -22,7 +22,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             self._delta = 1 # Unbiased scenario
         self._lambda = random.uniform(0,5)
         self.current_time = 0
-        self.T = 30
+        self.T = 100
         self.trust_graph = None
         self.distrust_graph = None
         self.last_quiescent_set = None

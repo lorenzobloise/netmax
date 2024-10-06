@@ -156,12 +156,10 @@ def build_trust_and_distrust_graphs(graph, verbose=False):
 
 def remove_isolated_nodes(graph):
     isolated_nodes = list(nx.isolates(graph))
-    if len(isolated_nodes) == 0:
-        return {node: node for node in graph.nodes}
     graph.remove_nodes_from(isolated_nodes)
     mapping = {old_label: new_label for new_label, old_label in enumerate(graph.nodes)}
-    nx.relabel_nodes(graph, mapping, copy=False)
-    return mapping
+    graph = nx.relabel_nodes(graph, mapping)
+    return mapping, graph
 
 def remove_nodes_not_in_community(community, active_sets):
     """
@@ -314,7 +312,8 @@ class InfluenceMaximization:
                 self.graph.graph['signed'] = True
             else:
                 break
-        mapping = remove_isolated_nodes(self.graph)
+        mapping, new_graph = remove_isolated_nodes(self.graph)
+        self.graph = new_graph
         if self.inv_edges:
             self.graph = self.graph.reverse(copy=False)
         for node in self.graph.nodes:
@@ -331,6 +330,12 @@ class InfluenceMaximization:
 
     def get_agents(self):
         return self.agents
+
+    def get_graph(self):
+        return self.graph
+
+    def get_history(self):
+        return self.history
 
     def __budget_fulfilled__(self, agent):
         """
@@ -361,8 +366,8 @@ class InfluenceMaximization:
             agent.seed.append(node)
             activate_node(self.graph, node, agent)
 
-    def __register_history__(self, round_id, current_state):
-        self.history[round_id] = copy.deepcopy(current_state)
+    def __register_history__(self, turn_id, current_state):
+        self.history[turn_id] = copy.deepcopy(current_state)
 
     def run(self):
         start_time = time.time()
@@ -372,6 +377,7 @@ class InfluenceMaximization:
             self.__insert_first_random_seed__()
         self.__register_history__(0, self.agents) # Register the initial state
         round_counter = 1
+        turn_counter = 1
         while not self.__game_over__():
             self.logger.info(f"Round {round_counter} has started")
             for agent in self.__get_agents_not_fulfilled__():
@@ -386,7 +392,8 @@ class InfluenceMaximization:
                 self.logger.debug(f"Spread of agent {agent.name} updated with {agent.spread}")
                 agent.seed.extend(partial_seed)
                 self.logger.debug(f"Seed set of agent {agent.name} updated with {partial_seed[0]} node")
-            self.__register_history__(round_counter, self.agents) # Register the state of the agents at the end of the round
+                self.__register_history__(turn_counter, self.agents) # Register the state of the agents at the end of the turn
+                turn_counter += 1
             round_counter += 1
         self.logger.info(f"Game over")
         execution_time = time.time() - start_time

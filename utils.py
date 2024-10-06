@@ -1,6 +1,8 @@
 import networkx as nx
 import numpy as np
 from tqdm import tqdm
+import random
+import os
 
 def read_adjacency_matrix(input_path):
     """
@@ -145,6 +147,24 @@ def __process_3__(file_path):
             node1, node2, sign, _ = map(int, line.split())
             f.write(f"{node1} {node2} {sign}\n")
 
+def __generate_signed_graph__(input_path):
+    """
+    Generate a signed graph from a not signed graph, putting a random sign on each edge
+    """
+    lines = None
+    with open(input_path, 'r') as f:
+        lines = f.readlines()
+    file_name, ext = os.path.splitext(input_path)
+    with open(f"{file_name}_signed.txt", 'w') as f:
+        f.write(lines[0])
+        for line in lines[1:]:
+            node1, node2, p = line.split()
+            sign = 1
+            r = random.random()
+            if r < 0.166667:
+                sign = -1
+            f.write(f"{node1} {node2} {sign}\n")
+
 def __binomial_coefficient__(n, k):
     C = [[-1 for _ in range(k+1)] for _ in range(n+1)]
     for i in range(n+1):
@@ -186,5 +206,4 @@ def find_hierarchy(superclass):
             subclasses.extend(find_hierarchy(subclass))
         else:
             subclasses.extend(find_hierarchy(subclass))
-
     return subclasses
