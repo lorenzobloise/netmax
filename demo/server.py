@@ -29,8 +29,8 @@ class Server:
             'purple',
         ]
 
-    def __initialize_layout__(self):
-        button_style = {
+    def __create_button_style(self):
+        return {
             'backgroundColor': '#4CAF50',
             'color': 'white',
             'padding': '12px 24px',
@@ -44,6 +44,191 @@ class Server:
             'transition': 'background-color 0.3s'
         }
 
+    def __create_legend_marker(self, symbol, color):
+        return dcc.Graph(
+            figure={
+                'data': [{
+                    'x': [0],
+                    'y': [0],
+                    'mode': 'markers',
+                    'marker': {
+                        'symbol': symbol,
+                        'size': 15,
+                        'color': color
+                    },
+                    'showlegend': False
+                }],
+                'layout': {
+                    'width': 30,
+                    'height': 30,
+                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
+                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'xaxis': {'visible': False},
+                    'yaxis': {'visible': False}
+                }
+            },
+            config={'displayModeBar': False},
+            style={'display': 'inline-block'}
+        )
+
+    def __create_legend_item(self, symbol, color, text):
+        return html.Div(style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'gap': '8px'
+        }, children=[
+            self.__create_legend_marker(symbol, color),
+            html.Span(text)
+        ])
+
+    def __create_legend_container(self):
+        return html.Div(style={
+            'backgroundColor': 'white',
+            'borderRadius': '8px',
+            'padding': '15px',
+            'marginBottom': '20px',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'display': 'flex',
+            'alignItems': 'center',
+            'flexWrap': 'wrap',
+            'gap': '20px'
+        }, children=[
+            html.H4('Legend:', style={
+                'margin': '0',
+                'marginRight': '20px',
+                'fontSize': '16px',
+                'fontWeight': 'bold'
+            }),
+            html.Div(style={
+                'display': 'flex',
+                'alignItems': 'center',
+                'flexWrap': 'wrap',
+                'gap': '20px'
+            }, children=[
+                self.__create_legend_item('circle', '#808080', 'Inactive node'),
+                self.__create_legend_item('circle', '#1E90FF', 'Node activated by agent blue'),
+                self.__create_legend_item('diamond', '#1E90FF', 'Node is in the seed set of agent blue'),
+                self.__create_legend_item('hexagram', '#808080', 'Node is in the pending state')
+            ])
+        ])
+
+    def __create_statistics_table(self):
+        return html.Table(style={
+            'width': '100%',
+            'borderCollapse': 'collapse'
+        }, children=[
+            html.Tr([
+                html.Th('Metrica', style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'left'}),
+                html.Th('Valore', style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ]),
+            html.Tr([
+                html.Td('Punteggio', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td('0', id='score-value',
+                        style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ]),
+            html.Tr([
+                html.Td('Tempo', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td('00:00', id='time-value',
+                        style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ]),
+            html.Tr([
+                html.Td('Mosse', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td('0', id='moves-value',
+                        style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ])
+        ])
+
+    def __create_statistics_container(self):
+        return html.Div(style={
+            'flex': '1 1 300px',
+            'minWidth': '250px',
+            'maxWidth': '400px',
+            'backgroundColor': 'white',
+            'borderRadius': '8px',
+            'padding': '15px',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'boxSizing': 'border-box'
+        }, children=[
+            html.H3('Statistiche Partita', style={
+                'textAlign': 'center',
+                'marginBottom': '15px',
+                'color': '#333'
+            }),
+            self.__create_statistics_table()
+        ])
+
+    def __create_graph_container(self):
+        return html.Div(style={
+            'flex': '1 1 600px',
+            'minWidth': '300px',
+            'backgroundColor': 'white',
+            'borderRadius': '8px',
+            'padding': '15px',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'boxSizing': 'border-box'
+        }, children=[
+            dcc.Graph(
+                id='example-graph',
+                figure=self.fig,
+                style={'height': '100%', 'width': '100%'}
+            )
+        ])
+
+    def __create_main_content(self):
+        return html.Div(style={
+            'display': 'flex',
+            'flexDirection': 'row',
+            'flexWrap': 'wrap',
+            'gap': '20px',
+            'marginBottom': '20px',
+            'minHeight': '70vh',
+            'width': '100%'
+        }, children=[
+            self.__create_graph_container(),
+            self.__create_statistics_container()
+        ])
+
+    def __create_slider_container(self):
+        return html.Div(
+            id='slider-container',
+            hidden=True,
+            style={
+                'width': '80%',
+                'margin': '0 auto',
+                'maxWidth': '800px'
+            },
+            children=[
+                dcc.Slider(0, 20, 5, value=0, id='slider')
+            ]
+        )
+
+    def __create_buttons_container(self):
+        button_style = self.__create_button_style()
+        return html.Div(style={
+            'display': 'flex',
+            'justifyContent': 'center',
+            'alignItems': 'center',
+            'gap': '20px',
+            'marginTop': '20px',
+            'flexWrap': 'wrap'
+        }, children=[
+            html.Button(
+                'Start Game',
+                id='start-game-button',
+                n_clicks=0,
+                disabled=False,
+                style=button_style
+            ),
+            html.Button(
+                'Start Simulation',
+                id='start-simulation-button',
+                n_clicks=0,
+                style=button_style
+            )
+        ])
+
+    def __initialize_layout__(self):
         return html.Div(style={
             'minHeight': '100vh',
             'width': '100%',
@@ -52,278 +237,10 @@ class Server:
             'boxSizing': 'border-box',
             'overflow': 'hidden'
         }, children=[
-            # Nuovo contenitore per la legenda in alto
-            html.Div(style={
-                'backgroundColor': 'white',
-                'borderRadius': '8px',
-                'padding': '15px',
-                'marginBottom': '20px',
-                'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-                'display': 'flex',
-                'alignItems': 'center',
-                'flexWrap': 'wrap',
-                'gap': '20px'
-            }, children=[
-                # Titolo della legenda
-                html.H4('Legend:', style={
-                    'margin': '0',
-                    'marginRight': '20px',
-                    'fontSize': '16px',
-                    'fontWeight': 'bold'
-                }),
-                # Container per gli elementi della legenda
-                html.Div(style={
-                    'display': 'flex',
-                    'alignItems': 'center',
-                    'flexWrap': 'wrap',
-                    'gap': '20px'
-                }, children=[
-                    # Inactive node
-                    html.Div(style={
-                        'display': 'flex',
-                        'alignItems': 'center',
-                        'gap': '8px'
-                    }, children=[
-                        dcc.Graph(
-                            figure={
-                                'data': [{
-                                    'x': [0],
-                                    'y': [0],
-                                    'mode': 'markers',
-                                    'marker': {
-                                        'symbol': 'circle',
-                                        'size': 15,
-                                        'color': '#808080'
-                                    },
-                                    'showlegend': False
-                                }],
-                                'layout': {
-                                    'width': 30,
-                                    'height': 30,
-                                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
-                                    'paper_bgcolor': 'rgba(0,0,0,0)',
-                                    'plot_bgcolor': 'rgba(0,0,0,0)',
-                                    'xaxis': {'visible': False},
-                                    'yaxis': {'visible': False}
-                                }
-                            },
-                            config={'displayModeBar': False},
-                            style={'display': 'inline-block'}
-                        ),
-                        html.Span('Inactive node')
-                    ]),
-                    # Node activated
-                    html.Div(style={
-                        'display': 'flex',
-                        'alignItems': 'center',
-                        'gap': '8px'
-                    }, children=[
-                        dcc.Graph(
-                            figure={
-                                'data': [{
-                                    'x': [0],
-                                    'y': [0],
-                                    'mode': 'markers',
-                                    'marker': {
-                                        'symbol': 'circle',
-                                        'size': 15,
-                                        'color': '#1E90FF'
-                                    },
-                                    'showlegend': False
-                                }],
-                                'layout': {
-                                    'width': 30,
-                                    'height': 30,
-                                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
-                                    'paper_bgcolor': 'rgba(0,0,0,0)',
-                                    'plot_bgcolor': 'rgba(0,0,0,0)',
-                                    'xaxis': {'visible': False},
-                                    'yaxis': {'visible': False}
-                                }
-                            },
-                            config={'displayModeBar': False},
-                            style={'display': 'inline-block'}
-                        ),
-                        html.Span('Node activated by agent blue')
-                    ]),
-                    # Seed set
-                    html.Div(style={
-                        'display': 'flex',
-                        'alignItems': 'center',
-                        'gap': '8px'
-                    }, children=[
-                        dcc.Graph(
-                            figure={
-                                'data': [{
-                                    'x': [0],
-                                    'y': [0],
-                                    'mode': 'markers',
-                                    'marker': {
-                                        'symbol': 'diamond',
-                                        'size': 15,
-                                        'color': '#1E90FF'
-                                    },
-                                    'showlegend': False
-                                }],
-                                'layout': {
-                                    'width': 30,
-                                    'height': 30,
-                                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
-                                    'paper_bgcolor': 'rgba(0,0,0,0)',
-                                    'plot_bgcolor': 'rgba(0,0,0,0)',
-                                    'xaxis': {'visible': False},
-                                    'yaxis': {'visible': False}
-                                }
-                            },
-                            config={'displayModeBar': False},
-                            style={'display': 'inline-block'}
-                        ),
-                        html.Span('Node in the seed set of agent blue')
-                    ]),
-                    # Pending node
-                    html.Div(style={
-                        'display': 'flex',
-                        'alignItems': 'center',
-                        'gap': '8px'
-                    }, children=[
-                        dcc.Graph(
-                            figure={
-                                'data': [{
-                                    'x': [0],
-                                    'y': [0],
-                                    'mode': 'markers',
-                                    'marker': {
-                                        'symbol': 'hexagram',
-                                        'size': 15,
-                                        'color': '#808080'
-                                    },
-                                    'showlegend': False
-                                }],
-                                'layout': {
-                                    'width': 30,
-                                    'height': 30,
-                                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
-                                    'paper_bgcolor': 'rgba(0,0,0,0)',
-                                    'plot_bgcolor': 'rgba(0,0,0,0)',
-                                    'xaxis': {'visible': False},
-                                    'yaxis': {'visible': False}
-                                }
-                            },
-                            config={'displayModeBar': False},
-                            style={'display': 'inline-block'}
-                        ),
-                        html.Span('Node pending for activation')
-                    ])
-                ])
-            ]),
-
-            # Resto del layout esistente...
-            html.Div(style={
-                'display': 'flex',
-                'flexDirection': 'row',
-                'flexWrap': 'wrap',
-                'gap': '20px',
-                'marginBottom': '20px',
-                'minHeight': '70vh',
-                'width': '100%'
-            }, children=[
-                # Contenitore del grafico
-                html.Div(style={
-                    'flex': '1 1 600px',
-                    'minWidth': '300px',
-                    'backgroundColor': 'white',
-                    'borderRadius': '8px',
-                    'padding': '15px',
-                    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-                    'boxSizing': 'border-box'
-                }, children=[
-                    dcc.Graph(
-                        id='example-graph',
-                        figure=self.fig,
-                        style={'height': '100%', 'width': '100%'}
-                    ),
-                ]),
-
-                # Tabella delle statistiche
-                html.Div(style={
-                    'flex': '1 1 300px',
-                    'minWidth': '250px',
-                    'maxWidth': '400px',
-                    'backgroundColor': 'white',
-                    'borderRadius': '8px',
-                    'padding': '15px',
-                    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-                    'boxSizing': 'border-box'
-                }, children=[
-                    html.H3('Statistiche Partita', style={
-                        'textAlign': 'center',
-                        'marginBottom': '15px',
-                        'color': '#333'
-                    }),
-                    html.Table(style={
-                        'width': '100%',
-                        'borderCollapse': 'collapse'
-                    }, children=[
-                        html.Tr([
-                            html.Th('Metrica',
-                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'left'}),
-                            html.Th('Valore',
-                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
-                        ]),
-                        html.Tr([
-                            html.Td('Punteggio', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
-                            html.Td('0', id='score-value',
-                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
-                        ]),
-                        html.Tr([
-                            html.Td('Tempo', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
-                            html.Td('00:00', id='time-value',
-                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
-                        ]),
-                        html.Tr([
-                            html.Td('Mosse', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
-                            html.Td('0', id='moves-value',
-                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
-                        ])
-                    ])
-                ])
-            ]),
-
-            # Contenitore per slider (nascosto inizialmente)
-            html.Div(id='slider-container',
-                     hidden=True,
-                     style={
-                         'width': '80%',
-                         'margin': '0 auto',
-                         'maxWidth': '800px'
-                     },
-                     children=[
-                         dcc.Slider(0, 20, 5, value=0, id='slider')
-                     ]),
-
-            # Contenitore per i pulsanti
-            html.Div(style={
-                'display': 'flex',
-                'justifyContent': 'center',
-                'alignItems': 'center',
-                'gap': '20px',
-                'marginTop': '20px',
-                'flexWrap': 'wrap'
-            }, children=[
-                html.Button(
-                    'Start Game',
-                    id='start-game-button',
-                    n_clicks=0,
-                    disabled=False,
-                    style=button_style
-                ),
-                html.Button(
-                    'Start Simulation',
-                    id='start-simulation-button',
-                    n_clicks=0,
-                    style=button_style
-                )
-            ])
+            self.__create_legend_container(),
+            self.__create_main_content(),
+            self.__create_slider_container(),
+            self.__create_buttons_container()
         ])
 
 
