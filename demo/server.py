@@ -30,18 +30,303 @@ class Server:
         ]
 
     def __initialize_layout__(self):
-        return html.Div(style={'height': '100vh', 'width': '100vw'}, children=[
-            dcc.Graph(
-                id='example-graph',
-                figure=self.fig,
-                style={'height': '100%', 'width': '100%'}
-            ),
-            html.Div(id='slider-container', hidden=True, children=[
-                dcc.Slider(0, 20, 5, value=0, id='slider')
+        button_style = {
+            'backgroundColor': '#4CAF50',
+            'color': 'white',
+            'padding': '12px 24px',
+            'border': 'none',
+            'borderRadius': '4px',
+            'margin': '10px',
+            'cursor': 'pointer',
+            'fontSize': '16px',
+            'fontWeight': 'bold',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.2)',
+            'transition': 'background-color 0.3s'
+        }
+
+        return html.Div(style={
+            'minHeight': '100vh',
+            'width': '100%',
+            'padding': '20px',
+            'backgroundColor': '#f5f5f5',
+            'boxSizing': 'border-box',
+            'overflow': 'hidden'
+        }, children=[
+            # Nuovo contenitore per la legenda in alto
+            html.Div(style={
+                'backgroundColor': 'white',
+                'borderRadius': '8px',
+                'padding': '15px',
+                'marginBottom': '20px',
+                'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+                'display': 'flex',
+                'alignItems': 'center',
+                'flexWrap': 'wrap',
+                'gap': '20px'
+            }, children=[
+                # Titolo della legenda
+                html.H4('Legend:', style={
+                    'margin': '0',
+                    'marginRight': '20px',
+                    'fontSize': '16px',
+                    'fontWeight': 'bold'
+                }),
+                # Container per gli elementi della legenda
+                html.Div(style={
+                    'display': 'flex',
+                    'alignItems': 'center',
+                    'flexWrap': 'wrap',
+                    'gap': '20px'
+                }, children=[
+                    # Inactive node
+                    html.Div(style={
+                        'display': 'flex',
+                        'alignItems': 'center',
+                        'gap': '8px'
+                    }, children=[
+                        dcc.Graph(
+                            figure={
+                                'data': [{
+                                    'x': [0],
+                                    'y': [0],
+                                    'mode': 'markers',
+                                    'marker': {
+                                        'symbol': 'circle',
+                                        'size': 15,
+                                        'color': '#808080'
+                                    },
+                                    'showlegend': False
+                                }],
+                                'layout': {
+                                    'width': 30,
+                                    'height': 30,
+                                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
+                                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                                    'xaxis': {'visible': False},
+                                    'yaxis': {'visible': False}
+                                }
+                            },
+                            config={'displayModeBar': False},
+                            style={'display': 'inline-block'}
+                        ),
+                        html.Span('Inactive node')
+                    ]),
+                    # Node activated
+                    html.Div(style={
+                        'display': 'flex',
+                        'alignItems': 'center',
+                        'gap': '8px'
+                    }, children=[
+                        dcc.Graph(
+                            figure={
+                                'data': [{
+                                    'x': [0],
+                                    'y': [0],
+                                    'mode': 'markers',
+                                    'marker': {
+                                        'symbol': 'circle',
+                                        'size': 15,
+                                        'color': '#1E90FF'
+                                    },
+                                    'showlegend': False
+                                }],
+                                'layout': {
+                                    'width': 30,
+                                    'height': 30,
+                                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
+                                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                                    'xaxis': {'visible': False},
+                                    'yaxis': {'visible': False}
+                                }
+                            },
+                            config={'displayModeBar': False},
+                            style={'display': 'inline-block'}
+                        ),
+                        html.Span('Node activated by agent blue')
+                    ]),
+                    # Seed set
+                    html.Div(style={
+                        'display': 'flex',
+                        'alignItems': 'center',
+                        'gap': '8px'
+                    }, children=[
+                        dcc.Graph(
+                            figure={
+                                'data': [{
+                                    'x': [0],
+                                    'y': [0],
+                                    'mode': 'markers',
+                                    'marker': {
+                                        'symbol': 'diamond',
+                                        'size': 15,
+                                        'color': '#1E90FF'
+                                    },
+                                    'showlegend': False
+                                }],
+                                'layout': {
+                                    'width': 30,
+                                    'height': 30,
+                                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
+                                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                                    'xaxis': {'visible': False},
+                                    'yaxis': {'visible': False}
+                                }
+                            },
+                            config={'displayModeBar': False},
+                            style={'display': 'inline-block'}
+                        ),
+                        html.Span('Node in the seed set of agent blue')
+                    ]),
+                    # Pending node
+                    html.Div(style={
+                        'display': 'flex',
+                        'alignItems': 'center',
+                        'gap': '8px'
+                    }, children=[
+                        dcc.Graph(
+                            figure={
+                                'data': [{
+                                    'x': [0],
+                                    'y': [0],
+                                    'mode': 'markers',
+                                    'marker': {
+                                        'symbol': 'hexagram',
+                                        'size': 15,
+                                        'color': '#808080'
+                                    },
+                                    'showlegend': False
+                                }],
+                                'layout': {
+                                    'width': 30,
+                                    'height': 30,
+                                    'margin': {'l': 0, 'r': 0, 't': 0, 'b': 0},
+                                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                                    'xaxis': {'visible': False},
+                                    'yaxis': {'visible': False}
+                                }
+                            },
+                            config={'displayModeBar': False},
+                            style={'display': 'inline-block'}
+                        ),
+                        html.Span('Node pending for activation')
+                    ])
+                ])
             ]),
-            html.Button('Start Game', id='start-game-button', n_clicks=0),
-            html.Button('Start Simulation', id='start-simulation-button', n_clicks=0)
+
+            # Resto del layout esistente...
+            html.Div(style={
+                'display': 'flex',
+                'flexDirection': 'row',
+                'flexWrap': 'wrap',
+                'gap': '20px',
+                'marginBottom': '20px',
+                'minHeight': '70vh',
+                'width': '100%'
+            }, children=[
+                # Contenitore del grafico
+                html.Div(style={
+                    'flex': '1 1 600px',
+                    'minWidth': '300px',
+                    'backgroundColor': 'white',
+                    'borderRadius': '8px',
+                    'padding': '15px',
+                    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+                    'boxSizing': 'border-box'
+                }, children=[
+                    dcc.Graph(
+                        id='example-graph',
+                        figure=self.fig,
+                        style={'height': '100%', 'width': '100%'}
+                    ),
+                ]),
+
+                # Tabella delle statistiche
+                html.Div(style={
+                    'flex': '1 1 300px',
+                    'minWidth': '250px',
+                    'maxWidth': '400px',
+                    'backgroundColor': 'white',
+                    'borderRadius': '8px',
+                    'padding': '15px',
+                    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+                    'boxSizing': 'border-box'
+                }, children=[
+                    html.H3('Statistiche Partita', style={
+                        'textAlign': 'center',
+                        'marginBottom': '15px',
+                        'color': '#333'
+                    }),
+                    html.Table(style={
+                        'width': '100%',
+                        'borderCollapse': 'collapse'
+                    }, children=[
+                        html.Tr([
+                            html.Th('Metrica',
+                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'left'}),
+                            html.Th('Valore',
+                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+                        ]),
+                        html.Tr([
+                            html.Td('Punteggio', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                            html.Td('0', id='score-value',
+                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+                        ]),
+                        html.Tr([
+                            html.Td('Tempo', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                            html.Td('00:00', id='time-value',
+                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+                        ]),
+                        html.Tr([
+                            html.Td('Mosse', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                            html.Td('0', id='moves-value',
+                                    style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+                        ])
+                    ])
+                ])
+            ]),
+
+            # Contenitore per slider (nascosto inizialmente)
+            html.Div(id='slider-container',
+                     hidden=True,
+                     style={
+                         'width': '80%',
+                         'margin': '0 auto',
+                         'maxWidth': '800px'
+                     },
+                     children=[
+                         dcc.Slider(0, 20, 5, value=0, id='slider')
+                     ]),
+
+            # Contenitore per i pulsanti
+            html.Div(style={
+                'display': 'flex',
+                'justifyContent': 'center',
+                'alignItems': 'center',
+                'gap': '20px',
+                'marginTop': '20px',
+                'flexWrap': 'wrap'
+            }, children=[
+                html.Button(
+                    'Start Game',
+                    id='start-game-button',
+                    n_clicks=0,
+                    disabled=False,
+                    style=button_style
+                ),
+                html.Button(
+                    'Start Simulation',
+                    id='start-simulation-button',
+                    n_clicks=0,
+                    style=button_style
+                )
+            ])
         ])
+
+
 
     def __initialize_agents__(self):
         agents = {}
@@ -118,32 +403,62 @@ class Server:
     def dispatcher_callback(self, n_clicks_game, n_clicks_simulation, slider_value):
         ctx = callback_context
         if not ctx.triggered:
-            slider_container = self.app.layout.children[1].children
-            hidden_value = self.app.layout.children[1].hidden
-            return self.fig, slider_container, hidden_value
+            slider_container = self.app.layout.children[2].children
+            hidden_value = self.app.layout.children[2].hidden
+            return self.fig, slider_container, hidden_value,self._update_button_style(self.game_played)
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         if button_id == 'start-game-button':
             fig = self.start_game(n_clicks_game)
             history = self.im_instance.get_history()
             slider = dcc.Slider(min=0, max=len(history)-1, step=1, value=len(history)-1, id='slider')
-            self.app.layout.children[1].children = [slider]
-            return fig, [slider] , False
+            self.app.layout.children[2].children = [slider]
+            return fig, [slider] , False, self._update_button_style(self.game_played)
         elif button_id == 'start-simulation-button':
             self.clear_graph()
             fig = self.start_simulation(n_clicks_simulation)
             history = self.im_instance.get_diff_model().get_history()
             slider = dcc.Slider(min=0, max=len(history)-1, step=1, value=len(history)-1, id='slider')
-            self.app.layout.children[1].children = [slider]
+            self.app.layout.children[2].children = [slider]
             self.simulation_played = True
-            return fig, [slider], False
+            return fig, [slider], False,self._update_button_style(self.game_played)
         elif button_id == 'slider':
             # Handle slider value change if needed
-            slider_container = self.app.layout.children[1].children
+            slider_container = self.app.layout.children[2].children
             slider_container[0].value = slider_value
             self.clear_graph()
             fig = self.__write_iteration__(slider_value)
-            return fig, slider_container, False
-        return self.fig, [], False
+            return fig, slider_container, False,self._update_button_style(self.game_played)
+        return self.fig, [], False, self._update_button_style(self.game_played)
+
+    def _update_button_style(self,game_is_already_started):
+        if game_is_already_started:  # Sostituisci con la tua condizione
+            style = {
+                'backgroundColor': '#cccccc',
+                'color': '#666666',
+                'padding': '12px 24px',
+                'border': 'none',
+                'borderRadius': '4px',
+                'margin': '10px',
+                'fontSize': '16px',
+                'fontWeight': 'bold',
+                'cursor': 'not-allowed'
+            }
+            return style
+        else:
+            style = {
+                'backgroundColor': '#4CAF50',
+                'color': 'white',
+                'padding': '12px 24px',
+                'border': 'none',
+                'borderRadius': '4px',
+                'margin': '10px',
+                'cursor': 'pointer',
+                'fontSize': '16px',
+                'fontWeight': 'bold',
+                'boxShadow': '0 2px 4px rgba(0,0,0,0.2)',
+                'transition': 'background-color 0.3s'
+            }
+            return style
 
     def clear_graph(self):
         self.node_trace.marker.symbol = ['circle' for _ in range(len(self.G.nodes))]
@@ -258,6 +573,7 @@ class Server:
             Output('example-graph', 'figure'),
             Output('slider-container', 'children'),
             Output('slider-container', 'hidden'),
+            Output('start-game-button', 'style'),
             Input('start-game-button', 'n_clicks'),
             Input('start-simulation-button', 'n_clicks'),
             Input('slider', 'value')
