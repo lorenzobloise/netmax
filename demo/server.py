@@ -9,6 +9,17 @@ class Server:
     def __init__(self):
         self.app = Dash(__name__,external_stylesheets=['stylesheet.css'],suppress_callback_exceptions=True)
         dict_of_agents = self.__initialize_agents__()
+
+        self.colors = [
+            'red',
+            'blue',
+            'green',
+            'orange',
+            'purple',
+        ]
+        self.colors_agent= {entry:self.colors[i] for i,entry in enumerate(dict_of_agents)}
+
+
         self.G = read_adjacency_matrix('../data/network.txt')
         self.im_instance  = im.InfluenceMaximization(input_graph=self.G, agents=dict_of_agents, alg='static_greedy',
                                                      diff_model='ic', inf_prob=None, r=100,
@@ -21,13 +32,7 @@ class Server:
         self.app.layout = self.__initialize_layout__()
         self.game_played = False
         self.simulation_played = False
-        self.colors = [
-            'red',
-            'blue',
-            'green',
-            'orange',
-            'purple',
-        ]
+
 
     def __create_button_style(self):
         return {
@@ -114,30 +119,68 @@ class Server:
         ])
 
     def __create_statistics_table(self):
-        return html.Table(style={
+
+
+        result=html.Table(id="statistics_table",style={
             'width': '100%',
             'borderCollapse': 'collapse'
         }, children=[
             html.Tr([
-                html.Th('Metrica', style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'left'}),
-                html.Th('Valore', style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+                html.Th('Name', style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'left'}),
+                html.Th('Value', style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
             ]),
             html.Tr([
-                html.Td('Punteggio', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
-                html.Td('0', id='score-value',
+                html.Td('Number of players', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td(len(self.agents), id='num_of_player',
                         style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
             ]),
             html.Tr([
-                html.Td('Tempo', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
-                html.Td('00:00', id='time-value',
+                html.Td('Algorithm', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td(self.im_instance.get_algorithm_name(), id='alg-name',
                         style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
             ]),
             html.Tr([
-                html.Td('Mosse', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
-                html.Td('0', id='moves-value',
+                html.Td('Diffusion_Model', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td(self.im_instance.get_diffusion_model_name(), id='diff_model_name',
                         style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
-            ])
+            ]),
+            html.Tr([
+               html.Td('Endorsement Policy', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td(self.im_instance.get_endorsement_policy_name(), id='endorsement_policy',
+                          style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ]),
+            html.Tr([
+                html.Td('Nodes in pending state', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td(0, id='pending-nodes',
+                        style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ]),
+
+
         ])
+
+
+        for i, agent in enumerate(self.agents):
+            result.children.append(html.Tr([
+                html.Td(f'Size of the seed set of {agent.name}-{self.colors_agent[agent.name]}', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td(agent.budget, id=f'{agent.name}-budget',
+                        style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ]))
+
+
+
+
+        for i, agent in enumerate(self.agents):
+            result.children.append(html.Tr([
+                html.Td(f'Nodes influenced by {agent.name}-{self.colors_agent[agent.name]}', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td(0, id=f'{agent.name}-influenced-nodes',
+                        style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ]))
+
+        self.statistics_table=result
+
+
+
+        return result
 
     def __create_statistics_container(self):
         return html.Div(style={
@@ -150,7 +193,7 @@ class Server:
             'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
             'boxSizing': 'border-box'
         }, children=[
-            html.H3('Statistiche Partita', style={
+            html.H3('Statistics', style={
                 'textAlign': 'center',
                 'marginBottom': '15px',
                 'color': '#333'
@@ -322,14 +365,14 @@ class Server:
         if not ctx.triggered:
             slider_container = self.app.layout.children[2].children
             hidden_value = self.app.layout.children[2].hidden
-            return self.fig, slider_container, hidden_value,self._update_button_style(self.game_played)
+            return self.fig, slider_container, hidden_value,self._update_button_style(self.game_played),self.statistics_table.children,0
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         if button_id == 'start-game-button':
             fig = self.start_game(n_clicks_game)
             history = self.im_instance.get_history()
             slider = dcc.Slider(min=0, max=len(history)-1, step=1, value=len(history)-1, id='slider')
             self.app.layout.children[2].children = [slider]
-            return fig, [slider] , False, self._update_button_style(self.game_played)
+            return fig, [slider] , False, self._update_button_style(self.game_played),self.statistics_table.children,0
         elif button_id == 'start-simulation-button':
             self.clear_graph()
             fig = self.start_simulation(n_clicks_simulation)
@@ -337,15 +380,16 @@ class Server:
             slider = dcc.Slider(min=0, max=len(history)-1, step=1, value=len(history)-1, id='slider')
             self.app.layout.children[2].children = [slider]
             self.simulation_played = True
-            return fig, [slider], False,self._update_button_style(self.game_played)
+            return fig, [slider], False,self._update_button_style(self.game_played), self.statistics_table.children,0
         elif button_id == 'slider':
             # Handle slider value change if needed
             slider_container = self.app.layout.children[2].children
             slider_container[0].value = slider_value
             self.clear_graph()
-            fig = self.__write_iteration__(slider_value)
-            return fig, slider_container, False,self._update_button_style(self.game_played)
-        return self.fig, [], False, self._update_button_style(self.game_played)
+            fig,num_of_pending_nodes = self.__write_iteration__(slider_value)
+            return fig, slider_container, False,self._update_button_style(self.game_played), self.statistics_table.children,num_of_pending_nodes
+
+        return self.fig, [], False, self._update_button_style(self.game_played), self.statistics_table.children,0
 
     def _update_button_style(self,game_is_already_started):
         if game_is_already_started:  # Sostituisci con la tua condizione
@@ -386,13 +430,15 @@ class Server:
             history=self.im_instance.get_history()
             dict_of_seed = {agent.name: agent.seed for agent in history[iteration]}
             self.fig = self.__update_figure__(dict_of_seed)
-            return self.fig
+            return self.fig,0
         else:
             diff_model = self.im_instance.get_diff_model()
             history = diff_model.get_history()
             active_nodes,pending_nodes = history[iteration]
             self.fig = self.__write_simulation__(active_nodes, pending_nodes)
-            return self.fig
+            self.update_statistics_table(active_nodes)
+
+            return self.fig,len(pending_nodes)
 
     def __write_simulation__(self, active_nodes, pending_nodes):
         color = self.__assign_colors__(active_nodes)
@@ -445,7 +491,23 @@ class Server:
             agents.seed = [self.im_instance.inverse_mapping[x] for x in agents.seed]
         self.fig = self.__update_figure__(activates_nodes)
         self.simulation_played = True
+        self.update_statistics_table(activates_nodes)
         return self.fig
+
+    def update_statistics_table(self,activates_nodes):
+        new_size=len(self.statistics_table.children)-len(self.agents)
+        #We need to remove the last number_of_players rows
+        self.statistics_table.children = self.statistics_table.children[:new_size]
+        #Now re-add the new values
+        for i, agent in enumerate(self.agents):
+            influenced_nodes = len(activates_nodes[agent.name])
+            self.statistics_table.children.append(html.Tr([
+                html.Td(f'Nodes influenced by {agent.name}-{self.colors_agent[agent.name]}', style={'padding': '10px', 'borderBottom': '1px solid #ddd'}),
+                html.Td(influenced_nodes-agent.budget, id=f'{agent.name}-influenced-nodes',
+                        style={'padding': '10px', 'borderBottom': '1px solid #ddd', 'textAlign': 'right'})
+            ]))
+
+
 
     def __assign_colors__(self, dict_agent_seed):
         colors = {}
@@ -453,7 +515,7 @@ class Server:
         for agent_name,value in dict_agent_seed.items():
             colors[agent_name] = self.colors[i]
             i = (i + 1) % len(self.colors)
-        return colors
+        return self.colors_agent
 
     def __is_in_some_seed_set__(self, node):
         node = self.im_instance.inverse_mapping[node]
@@ -491,6 +553,8 @@ class Server:
             Output('slider-container', 'children'),
             Output('slider-container', 'hidden'),
             Output('start-game-button', 'style'),
+            Output('statistics_table', 'children'),
+            Output('pending-nodes', 'children'),
             Input('start-game-button', 'n_clicks'),
             Input('start-simulation-button', 'n_clicks'),
             Input('slider', 'value')
