@@ -1,6 +1,8 @@
 import copy
 import random
 import networkx as nx
+from nbformat.sign import algorithms
+
 import utils
 from agent import Agent
 from algorithms.algorithm import Algorithm
@@ -369,6 +371,17 @@ class InfluenceMaximization:
     def __register_history__(self, turn_id, current_state):
         self.history[turn_id] = copy.deepcopy(current_state)
 
+    def get_algorithm_name(self):
+        #Check if the self.alg is not instantiated yet
+        if isinstance(self.alg, type):
+            return self.alg.__name__
+        return self.alg.__class__.__name__
+
+    def get_diffusion_model_name(self):
+        return self.diff_model.__class__.__name__
+
+    def get_endorsement_policy_name(self):
+        return self.endorsement_policy.__class__.__name__
     def run(self):
         start_time = time.time()
         alg = self.alg(graph=self.graph, agents=self.agents, curr_agent_id=None, budget=1, diff_model=self.diff_model, r=self.r)
