@@ -1,7 +1,6 @@
 import copy
 import random
 import networkx as nx
-from nbformat.sign import algorithms
 
 import utils
 from agent import Agent
