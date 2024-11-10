@@ -46,6 +46,7 @@ This framework wants to be a useful tool for all those people who study the prob
 - `endorsement_policy`: the policy that nodes use to choose which agent to endorse when they have been contacted by more than one agent. The framework implements different endorsement policies, default is `'random'` (see [Endorsement policies](#endorsement-policies))
 - `insert_opinion`: `True` if the nodes do not contain any information about their opinion on the agents, `False` otherwise (or if the opinion is not used)
 - `inv_edges`: a `bool` indicating whether to invert the edges of the graph
+- `first_random_seed`: a `bool` indicating whether to insert a first node (chosen randomly) in the seed set of every agent
 - `r`: number of simulations to execute (default is 100)
 - `verbose`: if `True` sets the logging level to `INFO`, otherwise displays only the minimal information
 
@@ -92,6 +93,8 @@ The supported diffusion models are:
 - Linear Threshold: implemented by the class `LinearThreshold` (**keyword**: `lt`)
 - Triggering Model: implemented by the class `Triggering` (**keyword**: `tr`)
 - Decreasing Cascade: implemented by the class `DecreasingCascade` (**keyword**: `dc`)
+- Semi-Progressive Friend-Foe Dynamic Linear Threshold: implemented by the class `SemiProgressiveFriendFoeDynamicLinearThreshold` (**keyword**: `sp_f2dlt`)
+- Non-Progressive Friend-Foe Dynamic Linear Threshold: implemented by the class `NonProgressiveFriendFoeDynamicLinearThreshold` (**keyword**: `np_f2dlt`)
 
 ### Influence probabilities
 
@@ -142,6 +145,7 @@ Here is a non-exhaustive list of useful papers which have been studied thoroughl
 - Liu - Influence maximization in social networks An ising-model-based approach
 - Liu et al. - Influence Maximization over Large-Scale Social Networks A Bounded Linear Approach
 - Lu et al. - From Competition to Complementarity Comparative Influence Diffusion and Maximization
+- Calio, Tagarelli - Complex influence propagation based on trust-aware dynamic linear threshold models
 - Tang et al. - Influence Maximization in Near-Linear Time A Martingale Approach
 - Tang et al. - Influence Maximization Near Optimal Time Complexity Meets Practical Efficiency
 - Wang et al. - Community-based Greedy Algorithm for Mining Top-K Influential Nodes in Mobile Social Networks
