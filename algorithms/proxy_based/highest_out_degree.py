@@ -8,6 +8,7 @@ class HighestOutDegree(ProxyBasedAlgorithm):
     which is the number of edges directed outwards from a node.
     The idea is that nodes with higher out-degree have more influence over other nodes in the network.
     """
+
     name = 'outdeg'
 
     def __init__(self, graph: DiGraph, agents, curr_agent_id, budget, diff_model, r):
@@ -15,9 +16,16 @@ class HighestOutDegree(ProxyBasedAlgorithm):
         self.out_deg_ranking = None
 
     def run(self):
-        self.__update_active_nodes__()
+        """
+        :return: The nodes to add in the seed set of the current agent and the spreads for each agent.
+        """
+        self.__update_active_nodes__() # Useful only for signed networks
+        # Compute the out-degrees if not already done
         if self.out_deg_ranking is None:
             self.out_deg_ranking = sorted(im.inactive_nodes(self.graph), key=lambda node: self.graph.out_degree(node))
+        # Iteratively, take the nodes with the highest out-degree.
+        # Repeats until the budget is fulfilled (in the InfluenceMaximization class, inside the run method, the algorithm
+        # is always invoked with the budget parameter set to 1, but we preferred to write the code in a more general way)
         seed_set = []
         for _ in range(self.budget):
             seed_set.append(self.out_deg_ranking.pop())

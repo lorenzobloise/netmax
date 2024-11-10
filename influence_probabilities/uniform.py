@@ -2,6 +2,9 @@ from influence_probabilities.influence_probability import InfluenceProbability
 import random
 
 class Uniform(InfluenceProbability):
+    """
+    Samples the influence probability from a uniform distribution between 0.01 and 0.1.
+    """
 
     name = 'uniform'
 

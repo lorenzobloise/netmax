@@ -3,6 +3,10 @@ import influence_maximization as im
 import networkx as nx
 
 class Community(EndorsementPolicy):
+    """
+    The nodes choose the agent to endorse by applying a voting strategy extended not only to their neighbors but to the entire community they're part of.
+    The communities are found only once, at the beginning, by applying Louvain algorithm.
+    """
 
     name = "community"
 
@@ -17,9 +21,11 @@ class Community(EndorsementPolicy):
         return None
 
     def choose_agent(self, node, graph):
+        # Find the community this node is part of
         community = self.__find_community__(node)
         scores = dict()
         for u in community:
+            # Check if this node is active
             if im.is_active(graph, u):
                 agent = graph.nodes[u]['agent']
                 scores[agent] = scores.get(agent, 0) + 1
