@@ -3,7 +3,11 @@ import random
 
 class Hybrid(InfluenceProbability):
     """
-    Paper: Gursoy et al. - "Influence Maximization in Social Networks Under Deterministic Linear Threshold Model"
+    Paper: Gursoy et al. - "Influence Maximization in Social Networks Under Deterministic Linear Threshold Model".
+    Assigns the probability to the edge (u,v) the following way. First, it computes two numbers:
+    - w1: 1 divided by the average degree of the graph
+    - w2: w1 multiplied by a random number sampled from a uniform distribution between 0.75 and 1
+    Then it returns the probability as the geometric mean of w1 and w2.
     """
 
     name = 'hybrid'

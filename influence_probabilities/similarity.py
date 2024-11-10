@@ -2,6 +2,10 @@ from influence_probabilities.influence_probability import InfluenceProbability
 import networkx as nx
 
 class Similarity(InfluenceProbability):
+    """
+    Assigns the influence probability to the edge (u,v) as the SimRank value between the two nodes.
+    The SimRank matrix is calculated only once, at the beginning of the influence probabilities computing.
+    """
 
     name = 'similarity'
 

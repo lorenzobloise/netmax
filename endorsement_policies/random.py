@@ -2,6 +2,9 @@ from endorsement_policies.endorsement_policy import EndorsementPolicy
 import random
 
 class Random(EndorsementPolicy):
+    """
+    Nodes choose the agent to endorse uniformly at random.
+    """
 
     name = "random"
 

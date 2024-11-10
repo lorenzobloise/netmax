@@ -1,10 +1,7 @@
-from xmlrpc.client import Error
-
 from diffusion_models.diffusion_model import DiffusionModel
 import random
 import math
 import influence_maximization as im
-import copy
 
 class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
     """
@@ -22,7 +19,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             self._delta = 1 # Unbiased scenario
         self._lambda = random.uniform(0,5)
         self.current_time = 0
-        self.T = 100
+        self.T = 4
         self.trust_graph = None
         self.distrust_graph = None
         self.last_quiescent_set = None

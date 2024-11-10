@@ -2,6 +2,9 @@ from endorsement_policies.endorsement_policy import EndorsementPolicy
 import influence_maximization as im
 
 class Voting(EndorsementPolicy):
+    """
+    The nodes choose the agent to endorse by looking at who their in and out neighbors chose and picking the one that occur the most.
+    """
 
     name = "voting"
 
