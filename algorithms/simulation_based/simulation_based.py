@@ -13,6 +13,5 @@ class SimulationBasedAlgorithm(Algorithm):
     def __init__(self, graph: nx.DiGraph, agents: list[Agent], curr_agent_id: int, budget, diff_model, r):
         super().__init__(graph, agents, curr_agent_id, budget, diff_model, r)
 
-
     def run(self):
         raise NotImplementedError("This method must be implemented by subclasses")

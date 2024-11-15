@@ -19,7 +19,9 @@ class HighestOutDegree(ProxyBasedAlgorithm):
         """
         :return: The nodes to add in the seed set of the current agent and the spreads for each agent.
         """
-        self.__update_active_nodes__() # Useful only for signed networks
+        # This method is necessary since when the input network is signed, the graph of the proxy-based algorithm
+        # contains only the trust-edges (see super-class ProxyBasedAlgorithm)
+        self.__update_active_nodes__()
         # Compute the out-degrees if not already done
         if self.out_deg_ranking is None:
             self.out_deg_ranking = sorted(im.inactive_nodes(self.graph), key=lambda node: self.graph.out_degree(node))
@@ -29,4 +31,6 @@ class HighestOutDegree(ProxyBasedAlgorithm):
         seed_set = []
         for _ in range(self.budget):
             seed_set.append(self.out_deg_ranking.pop())
+        # Return the new nodes to add to the seed set and the spread (which is 0 because we didn't do any simulation,
+        # in fact this is only a fictional value, since the real spread will be computed at the end of the game)
         return seed_set, {a.name: 0 for a in self.agents}
