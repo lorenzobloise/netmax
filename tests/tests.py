@@ -11,89 +11,115 @@ pd.set_option('display.max_colwidth', None)
 
 class GeneralTests(unittest.TestCase):
 
-    def __create_agents__(self, num_agents):
-        agents = {}
-        for i in range(num_agents):
-            agent_name = 'Agent_' + str(i)
-            budget = random.randint(10,10)
-            agents[agent_name] = budget
-        return agents
-
-    def __reset_agents__(self, agents):
-        for agent in agents:
+    def __reset_agents__(self, agents_dict):
+        """
+        At the end of every algorithm, reset the seed sets of the agents.
+        :param agents_dict: the 'agents' dictionary.
+        """
+        for agent in agents_dict:
             agent.seed = []
 
-    def test(self):
+    def test_im_unsigned_network(self):
         df = pd.DataFrame()
+        # SET THE PARAMETERS
+        # Insert the agents you want in the format <name: budget>
+        agents_dict = {
+            'Agent_0': 10,
+            'Agent_1': 10
+        }
+        # Un-comment the algorithms you want to execute
+        algos = [
+            # Simulation-based
+            # 'mcgreedy',
+            # 'celf',
+            # 'celfpp',
+            # Proxy-based
+            # 'outdeg',
+            # 'degdis',
+            # 'group_pr',
+            # Sketch-based
+            'static_greedy',
+            'ris',
+            'tim',
+            'tim_p'
+        ]
+        # Insert the path of your graph (which has to be in the appropriate format, see utils.py for some useful
+        # graph pre-processing)
         g = read_adjacency_matrix('../data/network.txt')
-        algo = ['celf', 'celfpp']
-        dict_of_agents = self.__create_agents__(num_agents=2)
-        for a in algo:
-            im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
-                                                     diff_model='ic', inf_prob=None, first_random_seed=True, r=100,
-                                                     insert_opinion=False, endorsement_policy='random', verbose=True)
+        diff_model = 'ic'
+        inf_prob = None
+        first_random_seed = False
+        num_simulations = 100
+        insert_opinion = False
+        endorsement_policy = 'random'
+        verbose = True
+        # Start the influence maximization process with an algorithm at the time
+        for a in algos:
+            im_instance = im.InfluenceMaximization(input_graph=g, agents=agents_dict, alg=a,
+                                                    diff_model=diff_model, inf_prob=inf_prob,
+                                                    first_random_seed=first_random_seed, r=num_simulations,
+                                                    insert_opinion=insert_opinion, endorsement_policy=endorsement_policy,
+                                                    verbose=verbose)
             seed, spread, execution_time = im_instance.run()
             result_row = {
                 "algorithm": [a],
                 "time": [execution_time],
             }
-            list_of_agents = im_instance.get_agents()
-            for agent in list_of_agents:
+            agents_list = im_instance.get_agents()
+            for agent in agents_list:
                 result_row[agent.name] = [agent.seed]
                 result_row[agent.name + '_spread'] = [agent.spread]
             df = pd.concat([df, pd.DataFrame(result_row)], ignore_index=True)
-            self.__reset_agents__(list_of_agents)
+            self.__reset_agents__(agents_list)
         print(df)
 
-    def test_signed_graph(self):
+    def test_im_signed_network(self):
         df = pd.DataFrame()
-        #g = read_signed_adjacency_matrix('../data/wikiconflict_signed.txt')
-        g = read_weighted_and_signed_adjacency_matrix('../data/wikiconflict-signed_edgelist.txt')
-        algo = ['degdis']
-        dict_of_agents = self.__create_agents__(num_agents=2)
-        for a in algo:
-            im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg=a,
-                                                    diff_model='sp_f2dlt', inf_prob=None, r=1, insert_opinion=False,
-                                                    endorsement_policy='random', verbose=True)
+        # SET THE PARAMETERS
+        # Insert the agents you want in the format <name: budget>
+        agents_dict = {
+            'Agent_0': 10,
+            'Agent_1': 10
+        }
+        # Un-comment the algorithms you want to execute
+        algos = [
+            # Simulation-based
+            #'mcgreedy',
+            #'celf',
+            #'celfpp',
+            # Proxy-based
+            #'outdeg',
+            'degdis',
+            #'group_pr',
+            # Sketch-based
+            #'static_greedy',
+            #'ris',
+            #'tim',
+            #'tim_p'
+        ]
+        # If you don't have the weights execute the first method instead of the second
+        #g = read_signed_adjacency_matrix('../data/wikiconflict_signed.txt') # First method
+        g = read_weighted_and_signed_adjacency_matrix('../data/wikiconflict-signed_edgelist.txt') # Second method
+        diff_model = 'sp_f2dlt'
+        inf_prob = None
+        num_simulations = 10
+        insert_opinion = False
+        endorsement_policy = 'random'
+        verbose = True
+        for a in algos:
+            im_instance = im.InfluenceMaximization(input_graph=g, agents=agents_dict, alg=a,
+                                                    diff_model=diff_model, inf_prob=inf_prob, r=num_simulations,
+                                                    insert_opinion=insert_opinion, endorsement_policy=endorsement_policy,
+                                                    verbose=verbose)
             seed, spread, execution_time = im_instance.run()
             result_row = {
                 "algorithm": [a],
                 "time": [execution_time],
             }
-            list_of_agents = im_instance.get_agents()
-            for agent in list_of_agents:
+            agents_list = im_instance.get_agents()
+            for agent in agents_list:
                 result_row[agent.name] = [agent.seed]
                 result_row[agent.name + '_spread'] = [agent.spread]
             df = pd.concat([df, pd.DataFrame(result_row)], ignore_index=True)
-            self.__reset_agents__(list_of_agents)
+            self.__reset_agents__(agents_list)
         print(df)
-        """
-        print("---------------------")
-        history = im_instance.diff_model.get_history()
-        new_history = {}
-        for it in history:
-            (active_sets, pending_nodes, quiescent_nodes) = history[it]
-            #new_history[it] = (sum([len(a) for a in active_sets.values()]), len(pending_nodes), sum([len(a) for a in quiescent_nodes.values()]))
-            new_history[it] = ([im_instance.inverse_mapping[x] for x in [a[i] for a in active_sets.values() for i in range(len(a))]],
-                               [im_instance.inverse_mapping[x] for x in pending_nodes.keys()],
-                               [im_instance.inverse_mapping[x] for x in [q[i] for q in quiescent_nodes.values() for i in range(len(q))]])
-        print(new_history)
-        """
-
-    def test_diffusion_model(self):
-        g = read_weighted_and_signed_adjacency_matrix('../data/wikiconflict-signed_edgelist.txt')
-        dict_of_agents = self.__create_agents__(num_agents=1)
-        im_instance = im.InfluenceMaximization(input_graph=g, agents=dict_of_agents, alg='tim_p',
-                                                    diff_model='sp_f2dlt', inf_prob=None, r=1, insert_opinion=False,
-                                                    endorsement_policy='random', verbose=True)
-        im_instance.agents[0].seed = [im_instance.mapping[x] for x in [64]]
-        active_sets = im_instance.diff_model.activate(im_instance.graph, im_instance.agents)
-        print(len(active_sets['Agent_0']))
-        #print(len(active_sets['Agent_1']))
-        print("---------------------")
-        history = im_instance.diff_model.get_history()
-        new_history = {}
-        for it in history:
-            (active_sets, pending_nodes, quiescent_nodes) = history[it]
-            new_history[it] = (sum([len(a) for a in active_sets.values()]), len(pending_nodes), sum([len(a) for a in quiescent_nodes.values()]))
-        print(new_history)

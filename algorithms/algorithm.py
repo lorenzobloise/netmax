@@ -20,7 +20,23 @@ class Algorithm:
         self.r = r
 
     def set_curr_agent(self, curr_agent_id):
+        """
+        Sets the current agent as the one passed.
+        :param curr_agent_id: index of the current agent.
+        """
         self.curr_agent_id = curr_agent_id
+
+    def __in_some_seed_set__(self, v, agents):
+        """
+        Checks if a node is in some seed set.
+        :param v: the node to check.
+        :param agents: the 'agents' dictionary, which contain all the seed sets.
+        :return: True if the node is in some seed set, False otherwise.
+        """
+        for a in agents:
+            if v in a.seed:
+                return True
+        return False
 
     def run(self):
         raise NotImplementedError("This method must be implemented by subclasses")
