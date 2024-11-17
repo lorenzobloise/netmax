@@ -2,7 +2,6 @@ import copy
 from algorithms.simulation_based.simulation_based import SimulationBasedAlgorithm
 import influence_maximization as im
 from tqdm import tqdm
-import logging
 
 class MCGreedy(SimulationBasedAlgorithm):
     """
