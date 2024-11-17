@@ -1,5 +1,4 @@
 import unittest
-import random
 import pandas as pd
 from utils import read_adjacency_matrix
 from utils import read_weighted_and_signed_adjacency_matrix
@@ -30,13 +29,13 @@ class GeneralTests(unittest.TestCase):
         # Un-comment the algorithms you want to execute
         algos = [
             # Simulation-based
-            # 'mcgreedy',
-            # 'celf',
-            # 'celfpp',
+            #'mcgreedy',
+            #'celf',
+            #'celfpp',
             # Proxy-based
-            # 'outdeg',
-            # 'degdis',
-            # 'group_pr',
+            #'outdeg',
+            #'degdis',
+            #'group_pr',
             # Sketch-based
             'static_greedy',
             'ris',
