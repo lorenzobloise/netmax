@@ -60,10 +60,11 @@ class DecreasingCascade(DiffusionModel):
         newly_activated = list(active_set)
         self.__register_history__(active_set, {})
         while len(newly_activated) > 0:
+            # First phase: try to contact inactive nodes
             pending_nodes = []
-            for u in newly_activated:
-                inactive_out_edges = self.__build_inactive_out_edges__(graph, u)
-                for (_, v, attr) in inactive_out_edges:
+            for u in newly_activated: #Consider the nodes activated at time step t-1.
+                inactive_out_edges = self.__build_inactive_out_edges__(graph, u) #Get the inactive out-neighbors of u.
+                for (_, v, attr) in inactive_out_edges: #For each inactive neighbor v of u, try to activate v, under the decreasing cascade model.
                     r = random.random()
                     trials = self.sim_graph.nodes[v]['trials']
                     if trials == 1:
@@ -76,6 +77,7 @@ class DecreasingCascade(DiffusionModel):
                         self.sim_graph.nodes[v]['trials'] = trials + 1
             self.__extend_stack__(pending_nodes)
             self.__register_history__(None, pending_nodes)
+            # Second phase: handle the pending nodes and designate the newly activated nodes as the ones activated in the current time step
             newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
             self.__register_history__(active_set, {})

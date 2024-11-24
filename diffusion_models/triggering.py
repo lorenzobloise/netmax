@@ -51,8 +51,11 @@ class Triggering(DiffusionModel):
         newly_activated = list(active_set)
         self.__register_history__(active_set, {})
         while len(newly_activated)>0:
+            # First phase: try to contact inactive nodes
             pending_nodes = set()
-            for u in newly_activated:
+            for u in newly_activated: #Consider the nodes activated at time step t-1.
+                # Take nodes that 'u' activates so check the reverse trigger set of 'u'
+                # For each node 'v' that 'u' activates, check if 'v' is not already active and if 'v' is not already put in the pending nodes
                 for v in self.sim_graph.nodes[u]['reverse_trigger_set']:
                     if not self.sim_graph.has_node(v):
                         self.__add_node__(graph, v)
@@ -68,6 +71,7 @@ class Triggering(DiffusionModel):
                         pending_nodes.add(v)
             self.__extend_stack__(pending_nodes)
             self.__register_history__(None, pending_nodes)
+            # Second phase: handle the pending nodes and designate the newly activated nodes as the ones activated in the current time step
             newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, list(pending_nodes))
             active_set.extend(newly_activated)
             self.__register_history__(active_set, {})

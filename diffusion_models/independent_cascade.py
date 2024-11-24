@@ -45,16 +45,17 @@ class IndependentCascade(DiffusionModel):
             # First phase: try to influence inactive nodes
             # Each newly activated node tries to activate its inactive neighbors by contacting them
             pending_nodes = []
-            for u in newly_activated:
-                inactive_out_edges = self.__build_inactive_out_edges__(graph, u)
-                for (_, v, attr) in inactive_out_edges:
+            for u in newly_activated: #Consider the nodes activated at time step t-1.
+                inactive_out_edges = self.__build_inactive_out_edges__(graph, u) #Get the inactive out-neighbors of u.
+                for (_, v, attr) in inactive_out_edges: # For each inactive neighbor v of u
                     r = random.random()
-                    if r < attr['p']:
+                    if r < attr['p']: #For each inactive neighbor v of u, try to activate v, under the decreasing cascade model.
                         im.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
                         if v not in pending_nodes:
-                            pending_nodes.append(v)
+                            pending_nodes.append(v) # Add v to the pending nodes
             self.__extend_stack__(pending_nodes)
             self.__register_history__(None, pending_nodes)
+            # Second phase: handle the pending nodes and designate the newly activated nodes as the ones activated in the current time step
             newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
             self.__register_history__(active_set, {})

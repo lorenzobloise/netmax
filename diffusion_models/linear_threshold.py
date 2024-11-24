@@ -84,22 +84,23 @@ class LinearThreshold(DiffusionModel):
         newly_activated = list(active_set)
         self.__register_history__(active_set, {})
         while len(newly_activated) > 0:
+            # First phase: try to contact inactive nodes
             pending_nodes = []
-            for u in newly_activated:
+            for u in newly_activated: #Consider the nodes activated at time step t-1.
                 curr_agent_name = self.sim_graph.nodes[u]['agent'].name
-                inactive_out_edges = self.__build_inactive_out_edges__(graph, u)
-                for _, v, attr in inactive_out_edges:
+                inactive_out_edges = self.__build_inactive_out_edges__(graph, u) #Get the inactive out-neighbors of u at time step t
+                for _, v, attr in inactive_out_edges: #For each inactive neighbor v of u, check if the threshold is reached
                     if self.sim_graph.nodes[v]['prob_sum'][curr_agent_name] >= self.sim_graph.nodes[v]['threshold']:
                         im.contact_node(self.sim_graph, v, self.sim_graph.nodes[u]['agent'])
                         if v not in pending_nodes:
                             pending_nodes.append(v)
-            # Second phase: contacted inactive nodes choose which agent to endorse by a strategy
             self.__extend_stack__(pending_nodes)
             self.__register_history__(None, pending_nodes)
+            # Second phase: handle the pending nodes and designate the newly activated nodes as the ones activated in the current time step
             newly_activated = im.manage_pending_nodes(graph, self.sim_graph, self.endorsement_policy, pending_nodes)
             active_set.extend(newly_activated)
             self.__register_history__(active_set, {})
-            for u in newly_activated:
+            for u in newly_activated: # Each newly activated node updates the prob_sum of its neighbors
                 self.__update_prob_sum__(graph, u, self.sim_graph.nodes[u]['agent'].name)
         result = self.__group_active_set_by_agent__(active_set)
         self.__reverse_operations__(graph)
