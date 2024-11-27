@@ -20,7 +20,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering :: Network Analysis"
+    "Topic :: Scientific/Engineering :: Information Analysis"
 ]
 keywords = "influence-maximization network-analysis simulator complex-networks"
 
