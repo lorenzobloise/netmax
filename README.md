@@ -1,6 +1,6 @@
 # NetMax - Influence Maximization in Social Networks
 
-NetMax is a Python framework that provides the implementation of several algorithms for the problem of **Influence Maximization in Social Networks**, originally formulated in "Maximizing the Spread of Influence through a Social Network" (Kempe, Kleinberg and Tardos, 2003). NetMax is built upon NetworkX, a popular python library for working with graphs. It also addresses the problem of Competitive Influence Maximization, as an extensive-form strategic game setting in which multiple entities try to maximize their own influence across the network while minimizing the others'. It works with both signed and unsigned networks, implementing progressive, semi-progressive and non-progressive diffusion models.
+NetMax is a Python library that provides the implementation of several algorithms for the problem of **Influence Maximization in Social Networks**, originally formulated in "Maximizing the Spread of Influence through a Social Network" (Kempe, Kleinberg and Tardos, 2003). NetMax is built upon NetworkX, a popular python library for working with graphs. It also addresses the problem of Competitive Influence Maximization, as an extensive-form strategic game setting in which multiple entities try to maximize their own influence across the network while minimizing the others'. It works with both signed and unsigned networks, implementing progressive, semi-progressive and non-progressive diffusion models.
 
 Table of Contents:
 
@@ -18,19 +18,22 @@ Table of Contents:
   - [Example](#example)
   - [Credits](#credits)
 
+## Installation
+
+To install the library you can run the following command:
+
+`pip install netmax`
+
 ## Requirements
 
 NetMax was developed with Python 3.12 and requires the installation of the following libraries:
 
 - **networkx** (version 3.3)
 - **numpy**
-- **scipy**
 - **tqdm**
 - **heapdict**
-- **pandas**
-- **dash** (version 2.18.0): useful for the demo of the framework
 
-You can easily install all the requirements by running the following command:
+If you have already installed the library using pip, you don't need to install the requirements, otherwise you can simply run the following command:
 
 `pip install -r requirements.txt`
 
