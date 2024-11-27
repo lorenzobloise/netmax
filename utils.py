@@ -88,21 +88,6 @@ def write_graph_to_file(graph, output_path):
             sign = attr.get('s', 0)  # Default to 0 if 's' is not present
             f.write(f"{u} {v} {p} {sign}\n")
 
-def __binomial_coefficient__(n, k):
-    """
-    Efficient binomial coefficient computation, used in TIM algorithm.
-    """
-    C = [[-1 for _ in range(k+1)] for _ in range(n+1)]
-    for i in range(n+1):
-        for j in range(min(i, k+1)):
-            # Base cases
-            if j == 0 or j == i:
-                C[i][j] = 1
-            # Calculate value using previously stored values
-            else:
-                C[i][j] = C[i-1][j-1] + C[i-1][j]
-    return C[n][k]
-
 def __my_similarity__(list1, list2):
     """
     Computes the similarity between two seed sets of the same length) by counting the common elements normalized by the seed set length.
@@ -128,28 +113,6 @@ def __compute_similarities__(dataframe):
             other_seed_set=dataframe[dataframe["algorithm"] == elem].iloc[0]["seed"]
             dataframe.loc[i, f'similarity_{elem}'] = __my_similarity__(current_seed_set, other_seed_set)
     return dataframe
-
-def find_hierarchy(superclass):
-    """
-    This method explores the namespace and recursively builds an array representing all the subclasses.
-    There are four super classes: Algorithm, DiffusionModel, InfluenceProbability and EndorsementPolicy. From each of
-    these four, there is a hierarchy of subclasses. So if this method is called on DiffusionModel, it will return an array
-    with all the subclasses names. If it's called on Algorithm (which has subclasses that also have their own subclasses),
-    the result array will only contain the leaf nodes names (which are the ones that can be instantiated and used),
-    without the intermediate nodes.
-    :param superclass: the superclass which hierarchy has to be explored.
-    :return: an array containing all the subclasses names.
-    """
-    subclasses = []
-    for subclass in superclass.__subclasses__():
-        # Subclasses who are not leaf nodes don't have the 'name' attribute, so they simply have to be explored
-        # without adding their name to the result array
-        if hasattr(subclass, 'name'):
-            subclasses.append((subclass.name, subclass))
-            subclasses.extend(find_hierarchy(subclass))
-        else:
-            subclasses.extend(find_hierarchy(subclass))
-    return subclasses
 
 # Different processing methods, based on the input file format
 
