@@ -13,6 +13,9 @@ class NonProgressiveFriendFoeDynamicLinearThreshold(SemiProgressiveFriendFoeDyna
         self.T = 100
 
     def __copy__(self):
+        """
+        Deep copy of the diffusion model
+        """
         result = NonProgressiveFriendFoeDynamicLinearThreshold(self.endorsement_policy)
         if self.sim_graph is not None:
             result.sim_graph = self.sim_graph.copy()
@@ -21,6 +24,11 @@ class NonProgressiveFriendFoeDynamicLinearThreshold(SemiProgressiveFriendFoeDyna
         return result
 
     def __deactivate_node__(self, graph, node):
+        """
+        Deactivates a node according to the R4 state-transition rule.
+        :param graph: the original graph.
+        :param node: the node to deactivate.
+        """
         agent_name = self.sim_graph.nodes[node]['agent'].name
         for (_, v) in self.trust_graph.out_edges(node):
             attr = graph.get_edge_data(node, v)
@@ -29,6 +37,13 @@ class NonProgressiveFriendFoeDynamicLinearThreshold(SemiProgressiveFriendFoeDyna
         im.deactivate_node_in_simulation_graph(graph, self.sim_graph, node)
 
     def __check_deactivated_nodes__(self, graph, active_set, seed_sets, newly_activated):
+        """
+        Checks if the R4 state-transition rule can be applied.
+        :param graph: the original graph.
+        :param active_set: the set of active nodes.
+        :param seed_sets: the seed sets of the agents.
+        :param newly_activated: the set of nodes that have just been activated.
+        """
         for node in active_set.difference(seed_sets):
             dict_prob_sum_trusted = self.sim_graph.nodes[node]['prob_sum_trusted']
             # If the prob_sum_trusted is less than the node's threshold for each campaign, the node switches to inactive
