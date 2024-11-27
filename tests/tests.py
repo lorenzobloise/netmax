@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 from utils import read_adjacency_matrix
 from utils import read_weighted_and_signed_adjacency_matrix
-import influence_maximization as im
+from netmax import influence_maximization as im
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)

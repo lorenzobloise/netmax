@@ -1,7 +1,7 @@
 from dash import Dash, dcc, html, Input, Output, callback_context
 import plotly.graph_objs as go
 from utils import read_adjacency_matrix
-import influence_maximization as im
+from netmax import influence_maximization as im
 import random
 
 class Server:
