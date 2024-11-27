@@ -1,7 +1,6 @@
 import copy
 import random
 import networkx as nx
-import utils
 from agent import Agent
 from algorithms.algorithm import Algorithm
 from endorsement_policies.endorsement_policy import EndorsementPolicy
@@ -383,10 +382,10 @@ class InfluenceMaximization:
         :return: The classes of the diffusion model, the algorithm and the influence probability.
         """
         # Build the hierarchy of the namespace
-        hierarchy: dict = dict(utils.find_hierarchy(Algorithm) +
-                               utils.find_hierarchy(DiffusionModel) +
-                               utils.find_hierarchy(InfluenceProbability) +
-                               utils.find_hierarchy(EndorsementPolicy))
+        hierarchy: dict = dict(find_hierarchy(Algorithm) +
+                               find_hierarchy(DiffusionModel) +
+                               find_hierarchy(InfluenceProbability) +
+                               find_hierarchy(EndorsementPolicy))
         hierarchy[None] = None
         # Check if the names exist
         for (k, v) in {'alg': alg_name, 'diff_model': diff_model_name, 'inf_prob': inf_prob_name, 'endorsement_policy': endorsement_policy_name}.items():
@@ -567,3 +566,27 @@ class InfluenceMaximization:
             'execution_time': execution_time
         }
         return seed, spread, execution_time
+
+
+# Utility function
+def find_hierarchy(superclass):
+    """
+    This method explores the namespace and recursively builds an array representing all the subclasses.
+    There are four super classes: Algorithm, DiffusionModel, InfluenceProbability and EndorsementPolicy. From each of
+    these four, there is a hierarchy of subclasses. So if this method is called on DiffusionModel, it will return an array
+    with all the subclasses names. If it's called on Algorithm (which has subclasses that also have their own subclasses),
+    the result array will only contain the leaf nodes names (which are the ones that can be instantiated and used),
+    without the intermediate nodes.
+    :param superclass: the superclass which hierarchy has to be explored.
+    :return: an array containing all the subclasses names.
+    """
+    subclasses = []
+    for subclass in superclass.__subclasses__():
+        # Subclasses who are not leaf nodes don't have the 'name' attribute, so they simply have to be explored
+        # without adding their name to the result array
+        if hasattr(subclass, 'name'):
+            subclasses.append((subclass.name, subclass))
+            subclasses.extend(find_hierarchy(subclass))
+        else:
+            subclasses.extend(find_hierarchy(subclass))
+    return subclasses
