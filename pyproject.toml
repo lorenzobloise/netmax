@@ -29,5 +29,9 @@ Homepage = "https://github.com/lorenzobloise/netmax"
 Issues = "https://github.com/lorenzobloise/netmax/issues"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools >= 61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["netmax*"]
+exclude = ["data*", "tests*", "demo*"]
