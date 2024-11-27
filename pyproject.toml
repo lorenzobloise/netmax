@@ -22,7 +22,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Information Analysis"
 ]
-keywords = "influence-maximization network-analysis simulator complex-networks"
+keywords = ["influence-maximization", "network-analysis", "simulator", "complex-networks"]
 
 [project.urls]
 Homepage = "https://github.com/lorenzobloise/netmax"
