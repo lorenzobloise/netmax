@@ -1,16 +1,17 @@
 [project]
 name = "netmax"
-version = "0.1.0"
+version = "1.0.0"
 authors = [
     { name="Lorenzo Bloise", email="l.bloise@outlook.it" },
     { name="Carmelo Gugliotta", email="carmelo.gugliotta00@gmail.com"}
 ]
 description = "Library for the problem of Influence Maximization in Social Networks"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "networkx==3.3",
     "numpy",
+    "scipy",
     "tqdm",
     "heapdict"
 ]

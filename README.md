@@ -32,6 +32,7 @@ NetMax was developed with Python 3.12 and requires the installation of the follo
 
 - **networkx** (version 3.3)
 - **numpy**
+- **scipy**
 - **tqdm**
 - **heapdict**
 
@@ -55,9 +56,9 @@ This framework wants to be a useful tool for all those people who study the prob
 - `r`: number of simulations to execute (default is 100)
 - `verbose`: if `True` sets the logging level to `INFO`, otherwise displays only the minimal information
 
-**Important**: `alg`, `diff_model`, `inf_prob` and `endorsement_policy` are `str` parameters, in order to prevent the user from directly importing and instantiating all the specific classes, which could have not been user-friendly.
-If the user, after reading the documentation, wants to customize some specific parameters, he can still change the corresponding attribute after the instantiation of the `InfluenceMaximization` object.
-To view all the keywords for these parameters, see the corresponding section.
+**Important**: `alg`, `diff_model`, `inf_prob` and `endorsement_policy` can be either `str` or class parameters:
+- If they are `str` parameters, they represent the `name` attribute of the corresponding class already present in the framework. This was done in order to prevent the user from directly importing and instantiating all the specific classes, which could have not been user-friendly. To view all the keywords for these parameters, see the corresponding section
+- Otherwise, they must extend the corresponding superclass depending on the parameters (`Algorithm` for `alg`, `DiffusionModel` for `diff_model`, `InfluenceProbability` for `inf_prob`, `EndorsementPolicy` for `endorsement_policy`). This way, the user can define his own custom classes
 
 After creating the `InfluenceMaximization` object, the user may call its `run()` method, which returns:
 
