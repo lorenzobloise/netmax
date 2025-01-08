@@ -184,4 +184,6 @@ print(f"Total execution time: {execution_time}")
 ## Credits
 
 The creators of NetMax are Lorenzo Bloise and Carmelo Gugliotta.
+
+
 This project has been developed as a coursework assigned for the class "Social Networks and Media Analysis", Spring 2024 (Instructor: [prof. Andrea Tagarelli](https://mlnteam-unical.github.io/)) at the DIMES Department, University of Calabria, Italy.
