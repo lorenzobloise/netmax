@@ -1,6 +1,7 @@
 # NetMax - Influence Maximization in Social Networks
 
 [![Downloads](https://pepy.tech/badge/netmax)](https://pepy.tech/project/netmax)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Florenzobloise%2Fnetmax.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Florenzobloise%2Fnetmax?ref=badge_shield)
 
 NetMax is a Python library that provides the implementation of several algorithms for the problem of **Influence Maximization in Social Networks**, originally formulated in "Maximizing the Spread of Influence through a Social Network" (Kempe, Kleinberg and Tardos, 2003). NetMax is built upon NetworkX, a popular python library for working with graphs. It also addresses the problem of Competitive Influence Maximization, as an extensive-form strategic game setting in which multiple entities try to maximize their own influence across the network while minimizing the others'. It works with both signed and unsigned networks, implementing progressive, semi-progressive and non-progressive diffusion models.
 
@@ -187,3 +188,7 @@ The creators of NetMax are Lorenzo Bloise and Carmelo Gugliotta.
 
 
 This project has been developed as a coursework assigned for the class "Social Networks and Media Analysis", Spring 2024 (Instructor: [prof. Andrea Tagarelli](https://mlnteam-unical.github.io/)) at the DIMES Department, University of Calabria, Italy.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Florenzobloise%2Fnetmax.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Florenzobloise%2Fnetmax?ref=badge_large)
