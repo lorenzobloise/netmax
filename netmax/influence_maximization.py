@@ -278,10 +278,10 @@ def simulation(graph, diff_model, agents, r, verbose=False):
 
 def simulation_delta(graph, diff_model, agents, curr_agent_id, seed1, seed2, r):
     """
-    Computes the spread as follows. For r experiments:
-    1) Computes the activated nodes from the first seed set {active_set_1}
-    2) Computes the activated nodes from the second seed set {active_set_2}
-    3) Stores the spread of this experiment as |{active_set_1} - {active_set_2}|
+    Computes the spread as follows. For r experiments:\n
+    - Computes the activated nodes from the first seed set {active_set_1}
+    - Computes the activated nodes from the second seed set {active_set_2}
+    - Stores the spread of this experiment as the cardinality of the difference {active_set_1} - {active_set_2}\n
     Then returns a dictionary containing the average spread for each agent.
     :param graph: The input graph (networkx.DiGraph).
     :param diff_model: The diffusion model.
@@ -314,6 +314,9 @@ def simulation_delta(graph, diff_model, agents, curr_agent_id, seed1, seed2, r):
     return spreads
 
 class InfluenceMaximization:
+    """
+    Class that controls the whole Influence Maximization process.
+    """
 
     def __init__(self, input_graph: nx.DiGraph, agents: dict,
                  alg: str | Algorithm, diff_model: str | DiffusionModel, inf_prob: str | InfluenceProbability = None, endorsement_policy: str | EndorsementPolicy = 'random',
@@ -378,10 +381,14 @@ class InfluenceMaximization:
 
     def __check_params__(self, diff_model_param, alg_param, inf_prob_param, endorsement_policy_param):
         """
-        For each parameter:
+        For each parameter:\n
         - If it is a 'str' parameter, check if it exists in the namespace and return the corresponding class
         - If it's not a 'str' parameter, check if it extends the correct class
-        :return: The classes of the diffusion model, the algorithm and the influence probability.
+        :param diff_model_param: The diffusion model to use.
+        :param alg_param: The algorithm to use.
+        :param inf_prob_param: The influence probability to use.
+        :param endorsement_policy_param: The endorsement policy to use.
+        :return: The classes of the diffusion model, the algorithm, the influence probability and the endorsement policy.
         """
         # Collect all the parameters and divide them into 'str' ones and class ones
         params = locals()
@@ -506,7 +513,8 @@ class InfluenceMaximization:
 
     def __budget_fulfilled__(self, agent):
         """
-        Check if the budget of an agent is fulfilled.
+        :param agent: The agent.
+        :return: True if the budget of the agent is fulfilled.
         """
         return len(agent.seed) >= agent.budget + 1 * self.first_random_seed
 
@@ -536,10 +544,16 @@ class InfluenceMaximization:
     def __register_history__(self, turn_id, current_state):
         """
         This method registers the current state of the game for every turn, to build a history of the whole game.
+        :param turn_id: The current turn.
+        :param current_state: The current state.
         """
         self.history[turn_id] = copy.deepcopy(current_state)
 
     def run(self):
+        """
+        Initializes the environment and runs the influence maximization game.
+        :return: The seed sets, the spreads, and the total execution time.
+        """
         # Measure the time taken to finish the game
         start_time = time.time()
         # Initialize the algorithm. The budget is set to 1 because at each turn only one node is chosen

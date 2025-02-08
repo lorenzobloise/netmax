@@ -6,16 +6,16 @@ class OpinionBased(InfluenceProbability):
     """
     Used only in multi-agent setting. This influence probability requires that the nodes are associated with an 'opinion' information about the agents.
     If the graph does not contain such information, set the 'insert_opinion' parameter at True in the Competitive Influence Maximization class.
-    Given:
+    Given:\n
     - A parameter b = 0.01, which is a constant to make the minimum value different from 0
     - A parameter k = (1 - b) / 2 = 0.495, where 2 at the denominator is the maximum of the sums of the similarities (both similarities are 1 in this case), used as a normalization constant
     - The SimRank matrix (computed only once)
-    - The opinion vectors of the nodes
-    The influence probability of the edge (u, v) is obtained the following way:
-    b + k * ( ( 1 / out_degree(u) ) * SimRank(u, v) + cosine_similarity( opinion(u), opinion(v) ) )
-    Because inside the parenthesis:
+    - The opinion vectors of the nodes\n
+    The influence probability of the edge (u, v) is obtained the following way:\n
+    b + k * ( ( 1 / out_degree(u) ) * SimRank(u, v) + cosine_similarity( opinion(u), opinion(v) ) )\n
+    Because inside the parenthesis:\n
     - The first addend is ( 1 / out_degree(u) ) * SimRank(u, v) and can be at maximum 1, when the node u has only one neighbor (v) and the SimRank similarity between u and v is 1 (it happens only when u and v are the same node, but mathematically it works)
-    - The second addend is cosine_similarity( opinion(u), opinion(v) ) and can be at maximum 1, when the two opinion vectors are exactly the same
+    - The second addend is cosine_similarity( opinion(u), opinion(v) ) and can be at maximum 1, when the two opinion vectors are exactly the same\n
     So their sum can be at maximum 2. We multiply it by k = 0.495 and obtain a maximum of 0.99, then add b = 0.01 and obtain a total maximum of 1.
     Instead, when both addends are 0, the minimum value is b = 0.01.
     """
@@ -34,9 +34,21 @@ class OpinionBased(InfluenceProbability):
         self.opinion_cache = dict()
 
     def __cosine_similarity__(self, vect1, vect2):
+        """
+        :param vect1: the first vector.
+        :param vect2: the second vector.
+        :return: the cosine similarity between the two vectors.
+        """
         return np.dot(vect1, vect2) / (np.linalg.norm(vect1) * np.linalg.norm(vect2))
 
     def get_probability(self, graph, u, v):
+        """
+        Method to infer the influence probability on the graph edges.
+        :param graph: the input graph.
+        :param u: the source node.
+        :param v: the target node.
+        :return: the inferred influence probability on the edge (u,v).
+        """
         try:
             # Get the opinion vectors of the two nodes
             opinion1 = graph.nodes[u]['opinion']
@@ -53,7 +65,10 @@ class OpinionBased(InfluenceProbability):
     def update_probability(self, graph, u, agent):
         """
         In this scenario, the node u has been influenced by an agent, so its old opinion has to be stored inside the cache
-        and its new opinion is 0 for all the agents except the one he endorses
+        and its new opinion is 0 for all the agents except the one he endorses.
+        :param graph: the input graph
+        :param u: the node influenced by an agent
+        :param agent: the agent who influenced the node
         """
         # Store the old opinion of the node u
         if u not in self.opinion_cache:
@@ -76,6 +91,8 @@ class OpinionBased(InfluenceProbability):
         """
         In this scenario, the node u has been deactivated (it happens either when a simulation has ended or during a dynamic diffusion model simulation),
         so we have to restore both its opinion and the influence probability for each of its out edges.
+        :param graph: the input graph
+        :param u: the deactivated node
         """
         # Restore the opinion
         graph.nodes[u]['opinion'] = self.opinion_cache[u]

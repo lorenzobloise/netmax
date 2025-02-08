@@ -6,10 +6,7 @@ import copy
 
 class SketchBasedAlgorithm(Algorithm):
     """
-    Sketch-based algorithms for seed set selection in influence maximization problems improve the theoretical efficiency
-    of simulation-based methods while preserving the approximation guarantee. To avoid rerunning the Monte Carlo
-    simulations, a number of "sketches" based on the specific diffusion model are pre-computed and exploited to evaluate
-    the influence spread.
+    Sketch-based algorithms for seed set selection in influence maximization problems improve the theoretical efficiency of simulation-based methods while preserving the approximation guarantee. To avoid rerunning the Monte Carlo simulations, a number of "sketches" based on the specific diffusion model are pre-computed and exploited to evaluate the influence spread.
     """
 
     def __init__(self, graph: nx.DiGraph, agents: list[Agent], curr_agent_id: int, budget, diff_model, r):

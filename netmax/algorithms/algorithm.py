@@ -2,6 +2,9 @@ import networkx as nx
 from netmax.agent import Agent
 
 class Algorithm:
+    """
+    Class that implements an algorithm for estimating the optimal seed set that maximizes the influence spread.
+    """
 
     def __init__(self, graph: nx.DiGraph, agents: list[Agent], curr_agent_id: int, budget, diff_model, r):
         """

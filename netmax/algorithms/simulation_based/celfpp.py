@@ -20,6 +20,7 @@ class CELF_PP(SimulationBasedAlgorithm):
         """
         Class that encapsulates a node and the information associated with it, useful to the CELF++ algorithm's logic.
         """
+
         # Static class variable that gets incremented every time the class is instantiated to have a unique identifier
         _idx = 0
 

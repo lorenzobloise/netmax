@@ -2,6 +2,8 @@
 
 [![Downloads](https://pepy.tech/badge/netmax)](https://pepy.tech/project/netmax)
 
+![plot](./logo/netmax_logo_white_square.png)
+
 NetMax is a Python library that provides the implementation of several algorithms for the problem of **Influence Maximization in Social Networks**, originally formulated in "Maximizing the Spread of Influence through a Social Network" (Kempe, Kleinberg and Tardos, 2003). NetMax is built upon NetworkX, a popular python library for working with graphs. It also addresses the problem of Competitive Influence Maximization, as an extensive-form strategic game setting in which multiple entities try to maximize their own influence across the network while minimizing the others'. It works with both signed and unsigned networks, implementing progressive, semi-progressive and non-progressive diffusion models.
 
 Table of Contents:
@@ -28,7 +30,7 @@ To install the library you can run the following command:
 
 ## Requirements
 
-NetMax was developed with Python 3.12 and requires the installation of the following libraries:
+NetMax was developed with Python 3.12 and requires the installation of several libraries, some of which are the following:
 
 - **networkx** (version 3.3)
 - **numpy**

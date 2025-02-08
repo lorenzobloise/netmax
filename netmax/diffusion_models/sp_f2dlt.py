@@ -3,7 +3,6 @@ import random
 import math
 from netmax import influence_maximization as im
 
-
 class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
     """
     Paper: Calio, Tagarelli - Complex influence propagation based on trust-aware dynamic linear threshold models
@@ -27,7 +26,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
 
     def __copy__(self):
         """
-        Deep copy of the diffusion model
+        Deep copy of the diffusion model.
         """
         result = SemiProgressiveFriendFoeDynamicLinearThreshold(self.endorsement_policy)
         if self.sim_graph is not None:
@@ -39,7 +38,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
     def preprocess_data(self, graph):
         """
         For each node, sample the threshold from a uniform distribution in [0,1], and initialize the probability sum
-        for each agent as a dictionary (only consisting of trusted edges), the quiescence time, the quiescence
+        for each agent as a dictionary (only consisting of trusted edges), the quiescence time, the quiescence.
         value and the last activation time.
         :param graph: the original graph.
         """
@@ -63,6 +62,10 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         self.sim_graph.graph['stack_quiescence_value'] = set()
 
     def __add_node_to_the_stack_prob_sum_trusted__(self, node):
+        """
+        Adds a node to the stack of the probability sum of the trusted in-edges.
+        :param node: the node to add.
+        """
         self.sim_graph.graph['stack_prob_sum_trusted'].add(node)
 
     def __update_prob_sum_trusted__(self, graph, node, agent_name):
@@ -147,6 +150,10 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             self.sim_graph.nodes[node]['quiescence_value'] = None
 
     def __extend_quiescence_stack__(self, quiescent_nodes):
+        """
+        Extends the quiescence stack with some quiescent nodes.
+        :param quiescent_nodes: the quiescent nodes to add to the quiescence stack.
+        """
         self.sim_graph.graph['stack_quiescence_value'].update(quiescent_nodes)
 
     def __distrusted_in_neighbors_same_campaign__(self, node):
@@ -195,13 +202,16 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
             return theta_v + exp_term - theta_v * indicator_func
 
     def __time_expired__(self):
+        """
+        :return: True if the current time is greater than the maximum time.
+        """
         return self.current_time > self.T
 
     def __no_more_activation_attempts__(self, newly_activated, quiescent_nodes):
         """
-        Returns True if there are no more activation attempts.
         :param newly_activated: the nodes who have just been activated.
         :param quiescent_nodes: the nodes who are in the QUIESCENT state.
+        :return: True if there are no more activation attempts, False otherwise.
         """
         if len(newly_activated) == 0 and len(quiescent_nodes) == 0:
             return True
@@ -220,6 +230,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         """
         Decrement the quiescence value of the input node and checks if it can exit the QUIESCENT state.
         :param node: the input node.
+        :return: True if the input node can exit the QUIESCENT state, False otherwise.
         """
         self.sim_graph.nodes[node]['quiescence_value'] -= 1
         return self.sim_graph.nodes[node]['quiescence_value'] <= 0
@@ -249,6 +260,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         :param graph: the original graph.
         :param node: the input node.
         :param agents: the 'agents' dictionary.
+        :return: True if the input node should change the agent, False otherwise.
         """
         dict_prob_sum_trusted = self.sim_graph.nodes[node]['prob_sum_trusted']
         max_agent_name = max(dict_prob_sum_trusted, key=dict_prob_sum_trusted.get)
@@ -299,6 +311,7 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
         :param active_set: the set of active nodes.
         :param seed_sets: the seed sets of the agents.
         :param newly_activated: the set of nodes that have just been activated.
+        :return: the newly activated nodes.
         """
         return newly_activated
 
@@ -322,8 +335,8 @@ class SemiProgressiveFriendFoeDynamicLinearThreshold(DiffusionModel):
 
     def __group_quiescent_set_by_agent__(self, quiescent_set):
         """
-        Groups the set of quiescent nodes by agent and returns it.
         :param quiescent_set: the set of quiescent nodes.
+        :return: the set of quiescent nodes grouped by agent.
         """
         dict_result = {}
         for u in quiescent_set:

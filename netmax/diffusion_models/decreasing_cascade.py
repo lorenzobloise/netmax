@@ -14,7 +14,7 @@ class DecreasingCascade(DiffusionModel):
 
     def __copy__(self):
         """
-        Deep copy of the diffusion model
+        Deep copy of the diffusion model.
         """
         result = DecreasingCascade(self.endorsement_policy)
         if self.sim_graph is not None:
@@ -35,6 +35,8 @@ class DecreasingCascade(DiffusionModel):
     def __initialize_sim_graph__(self, graph, agents):
         """
         Decreasing Cascade also needs a stack storing the nodes who have changed the value of their 'trials' attribute.
+        :param graph: the original graph.
+        :param agents: the 'agents' dictionary.
         """
         super().__initialize_sim_graph__(graph, agents)
         self.sim_graph.graph['stack_trials'] = set()  # Stack for dynamic probabilities
@@ -58,7 +60,7 @@ class DecreasingCascade(DiffusionModel):
                     self.sim_graph.graph['stack_trials'].add(u)
         return active_set
 
-    def __reverse_operations__(self,graph):
+    def __reverse_operations__(self, graph):
         """
         This method empties the stack of the active nodes (superclass method call) and does the same with the
         'stack_trials' stack.

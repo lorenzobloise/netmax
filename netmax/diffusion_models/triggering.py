@@ -14,7 +14,7 @@ class Triggering(DiffusionModel):
 
     def __copy__(self):
         """
-        Deep copy of the diffusion model
+        Deep copy of the diffusion model.
         """
         result = Triggering(self.endorsement_policy)
         if self.sim_graph is not None:

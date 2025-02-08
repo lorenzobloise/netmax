@@ -6,9 +6,7 @@ import copy
 
 class StaticGreedy(SketchBasedAlgorithm):
     """
-    Paper: Chen et al. - "StaticGreedy: Solving the Scalability-Accuracy Dilemma in Influence Maximization" (2013).
-    This method produces a number of Monte Carlo snapshots at the beginning, and uses this same set of snapshots
-    (thus, static) in all iterations, instead of producing a huge number of Monte Carlo simulations in every iteration.
+    Paper: Chen et al. - "StaticGreedy: Solving the Scalability-Accuracy Dilemma in Influence Maximization" (2013). This method produces a number of Monte Carlo snapshots at the beginning, and uses this same set of snapshots (thus, static) in all iterations, instead of producing a huge number of Monte Carlo simulations in every iteration.
     """
 
     name = 'static_greedy'

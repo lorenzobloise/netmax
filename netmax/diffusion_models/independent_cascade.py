@@ -2,7 +2,6 @@ import random
 from netmax.diffusion_models.diffusion_model import DiffusionModel
 from netmax import influence_maximization as im
 
-
 class IndependentCascade(DiffusionModel):
     """
     Paper: Goldenberg et al. - "Talk of the network: A complex system look at the underlying process of word-of-mouth"
@@ -15,7 +14,7 @@ class IndependentCascade(DiffusionModel):
 
     def __copy__(self):
         """
-        Deep copy of the diffusion model
+        Deep copy of the diffusion model.
         """
         result = IndependentCascade(self.endorsement_policy)
         if self.sim_graph is not None:

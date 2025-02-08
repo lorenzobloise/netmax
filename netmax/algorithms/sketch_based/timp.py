@@ -10,8 +10,7 @@ from tqdm import tqdm
 
 class TIMp(SketchBasedAlgorithm):
     """
-    With respect to TIM, TIM+ adds another phase between the KPT estimation and the node selection ones, which is the
-    KPT refinement: in fact, KPT can be considerably smaller and having this phase can both:
+    With respect to TIM, TIM+ adds another phase between the KPT estimation and the node selection ones, which is the KPT refinement: in fact, KPT can be considerably smaller and having this phase can both:
     1) Significantly reduce the number of generated RR sets, so better computation time
     2) Improve the accuracy of the result
     """
@@ -132,18 +131,18 @@ class TIMp(SketchBasedAlgorithm):
         # Return the most accurate lower bound of the two KPT values
         return max(self.kpt, kpt_prime)
 
-    def __node_selection__(self, agents):
+    def __node_selection__(self, agents_copy):
         """
         Picks the node that covers the most reverse reachable sets.
         :param agents_copy: The deep copy of the 'agents' dictionary.
         """
         top_node = max(self.occurrences.items(), key=lambda x: len(x[1]))[0] # Pick the node that covers the most RR sets
-        agents[self.curr_agent_id].seed.append(top_node) # Add it into the seed set
+        agents_copy[self.curr_agent_id].seed.append(top_node) # Add it into the seed set
         # Remove all reverse reachable sets that are covered by the node
         self.rr_sets = [rr_set for idx, rr_set in enumerate(self.rr_sets) if idx not in self.occurrences[top_node]]
         # Update also the occurrences dictionary removing the indexes of the removed RR sets
         self.occurrences = {v: self.occurrences[v].difference(self.occurrences[top_node]) for v in
-                            self.graph.nodes if not self.__in_some_seed_set__(v, agents)}
+                            self.graph.nodes if not self.__in_some_seed_set__(v, agents_copy)}
 
     def run(self):
         """

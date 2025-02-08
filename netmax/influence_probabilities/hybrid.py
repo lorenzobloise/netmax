@@ -17,6 +17,12 @@ class Hybrid(InfluenceProbability):
         self.avg_degree = None
 
     def get_probability(self, graph, u, v):
+        """
+        :param graph: the input graph.
+        :param u: the source node.
+        :param v: the target node.
+        :return: the inferred influence probability on the edge (u,v).
+        """
         # Get average global degree if not already computed
         if self.avg_degree is None:
             self.avg_degree = sum(dict(graph.degree()).values()) / len(graph.nodes)

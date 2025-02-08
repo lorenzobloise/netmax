@@ -2,12 +2,9 @@ from networkx import DiGraph
 from netmax.algorithms.proxy_based.proxy_based import ProxyBasedAlgorithm
 from netmax import influence_maximization as im
 
-
 class HighestOutDegree(ProxyBasedAlgorithm):
     """
-    The Highest Out-Degree algorithm selects nodes based on their out-degree,
-    which is the number of edges directed outwards from a node.
-    The idea is that nodes with higher out-degree have more influence over other nodes in the network.
+    The Highest Out-Degree algorithm selects nodes based on their out-degree, which is the number of edges directed outwards from a node. The idea is that nodes with higher out-degree have more influence over other nodes in the network.
     """
 
     name = 'outdeg'

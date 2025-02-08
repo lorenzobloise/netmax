@@ -9,9 +9,7 @@ import math
 
 class RIS(SketchBasedAlgorithm):
     """
-    Paper: Borgs et al. - "Maximizing Social Influence in Nearly Optimal Time" (2014).
-    In RIS, the influence of any seed set is estimated by selecting random nodes and seeing the portion of the
-    randomly selected nodes which can be reached by S, called Reverse Reachable sets (RR sets).
+    Paper: Borgs et al. - "Maximizing Social Influence in Nearly Optimal Time" (2014). In RIS, the influence of any seed set is estimated by selecting random nodes and seeing the portion of the randomly selected nodes which can be reached by S, called Reverse Reachable sets (RR sets).
     """
 
     name = 'ris'

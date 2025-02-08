@@ -1,7 +1,6 @@
 from netmax.diffusion_models import SemiProgressiveFriendFoeDynamicLinearThreshold
 from netmax import influence_maximization as im
 
-
 class NonProgressiveFriendFoeDynamicLinearThreshold(SemiProgressiveFriendFoeDynamicLinearThreshold):
     """
     Paper: Calio, Tagarelli - Complex influence propagation based on trust-aware dynamic linear threshold models
@@ -15,7 +14,7 @@ class NonProgressiveFriendFoeDynamicLinearThreshold(SemiProgressiveFriendFoeDyna
 
     def __copy__(self):
         """
-        Deep copy of the diffusion model
+        Deep copy of the diffusion model.
         """
         result = NonProgressiveFriendFoeDynamicLinearThreshold(self.endorsement_policy)
         if self.sim_graph is not None:
@@ -44,6 +43,7 @@ class NonProgressiveFriendFoeDynamicLinearThreshold(SemiProgressiveFriendFoeDyna
         :param active_set: the set of active nodes.
         :param seed_sets: the seed sets of the agents.
         :param newly_activated: the set of nodes that have just been activated.
+        :return: the newly activated nodes with the R4 state-transition rule.
         """
         for node in active_set.difference(seed_sets):
             dict_prob_sum_trusted = self.sim_graph.nodes[node]['prob_sum_trusted']

@@ -1,6 +1,6 @@
 [project]
 name = "netmax"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
     { name="Lorenzo Bloise", email="l.bloise@outlook.it" },
     { name="Carmelo Gugliotta", email="carmelo.gugliotta00@gmail.com"}
@@ -13,7 +13,9 @@ dependencies = [
     "numpy",
     "scipy",
     "tqdm",
-    "heapdict"
+    "heapdict",
+    "pillow",
+    "pandas"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

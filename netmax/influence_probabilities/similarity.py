@@ -14,6 +14,12 @@ class Similarity(InfluenceProbability):
         self.similarity = None
 
     def get_probability(self, graph, u, v):
+        """
+        :param graph: the input graph.
+        :param u: the source node.
+        :param v: the target node.
+        :return: the inferred influence probability on the edge (u,v).
+        """
         if self.similarity is None:
             self.similarity = nx.simrank_similarity(graph)
         return self.similarity[u][v]

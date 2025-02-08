@@ -5,11 +5,7 @@ from tqdm import tqdm
 
 class MCGreedy(SimulationBasedAlgorithm):
     """
-    Monte Carlo greedy works by picking iteratively the node with the maximum marginal gain until the budget is fulfilled.
-    Tha marginal gains of the nodes are computed at each iteration by doing a certain number of Monte Carlo simulations
-    (the typical number used in literature is 10,000). Even though the agents are more than one, we don't need to store
-    different marginal gains for each agent (like we do in CELF or CELF++) because Monte Carlo greedy simply re-computes
-    those value each time.
+    Monte Carlo greedy works by picking iteratively the node with the maximum marginal gain until the budget is fulfilled. The marginal gains of the nodes are computed at each iteration by doing a certain number of Monte Carlo simulations (the typical number used in literature is 10,000). Even though the agents are more than one, we don't need to store different marginal gains for each agent (like we do in CELF or CELF++) because Monte Carlo greedy simply re-computes those value each time.
     """
 
     name = 'mcgreedy'

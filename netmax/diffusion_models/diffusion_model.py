@@ -4,6 +4,9 @@ import networkx as nx
 import copy
 
 class DiffusionModel:
+    """
+    Class that implements a diffusion model.
+    """
 
     def __init__(self, endorsement_policy):
         self.endorsement_policy = endorsement_policy
@@ -17,7 +20,7 @@ class DiffusionModel:
 
     def __copy__(self):
         """
-        Deep copy of the diffusion model
+        Deep copy of the diffusion model.
         """
         result = DiffusionModel(self.endorsement_policy)
         if self.sim_graph is not None:

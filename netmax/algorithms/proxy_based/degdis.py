@@ -4,9 +4,7 @@ from heapdict import heapdict
 
 class DegDis(ProxyBasedAlgorithm):
     """
-    Paper: Chen et al. - "Efficient Influence Maximization in Social Networks".
-    The Degree Discount heuristic is an improvement over the Highest Out-Degree algorithm. It takes into account the
-    influence of already selected nodes and adjusts the degree of remaining nodes accordingly.
+    Paper: Chen et al. - "Efficient Influence Maximization in Social Networks". The Degree Discount heuristic is an improvement over the Highest Out-Degree algorithm. It takes into account the influence of already selected nodes and adjusts the degree of remaining nodes accordingly.
     """
 
     name = 'degdis'
@@ -50,7 +48,8 @@ class DegDis(ProxyBasedAlgorithm):
 
     def __compute_node_score__(self, v):
         """
-        :return: the score of the degree discount heuristic for the node v, as shown in the paper. Only difference is
+        :param v: The node to compute the score for.
+        :return: The score of the degree discount heuristic for the node v, as shown in the paper. Only difference is
         that the paper works with fixed-value influence probabilities, while we extend this considering different
         probability values by taking the highest edge label among the in-edges of the vertex.
         """

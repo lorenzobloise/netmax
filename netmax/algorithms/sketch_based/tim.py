@@ -10,9 +10,7 @@ from tqdm import tqdm
 
 class TIM(SketchBasedAlgorithm):
     """
-    Paper: Tang et al. - "Influence Maximization: Near Optimal Time Complexity Meets Practical Efficiency" (2014).
-    TIM reduces the number of RR sets required to ensure the same theoretical bound as RIS, by doing two distinct
-    phases: KPT estimation (where KPT is used for determining the optimal number of RR sets) and node selection.
+    Paper: Tang et al. - "Influence Maximization: Near Optimal Time Complexity Meets Practical Efficiency" (2014). TIM reduces the number of RR sets required to ensure the same theoretical bound as RIS, by doing two distinct phases: KPT estimation (where KPT is used for determining the optimal number of RR sets) and node selection.
     """
 
     name = 'tim'

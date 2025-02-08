@@ -5,11 +5,7 @@ from netmax.algorithms.proxy_based.proxy_based import ProxyBasedAlgorithm
 
 class Group_PR(ProxyBasedAlgorithm):
     """
-    Paper: Liu et al. - "Influence Maximization over Large-Scale Social Networks A Bounded Linear Approach".
-    Group-PageRank starts from the fact that PageRank as un upper bound to the influence of single nodes under
-    linear influence processes (and it's called influence-PageRank), and extends this concept to compute the
-    influence of groups of nodes via the so-called Group-PageRank. Then it plugs this heuristic into a linear
-    framework to maximize the influence spread.
+    Paper: Liu et al. - "Influence Maximization over Large-Scale Social Networks A Bounded Linear Approach". Group-PageRank starts from the fact that PageRank as un upper bound to the influence of single nodes under linear influence processes (and it's called influence-PageRank), and extends this concept to compute the influence of groups of nodes via the so-called Group-PageRank. Then it plugs this heuristic into a linear framework to maximize the influence spread.
     """
 
     name = 'group_pr'

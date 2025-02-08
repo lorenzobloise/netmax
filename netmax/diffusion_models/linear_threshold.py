@@ -2,7 +2,6 @@ from netmax.diffusion_models.diffusion_model import DiffusionModel
 import random
 from netmax import influence_maximization as im
 
-
 class LinearThreshold(DiffusionModel):
     """
     Paper: Granovetter et al. - "Threshold models of collective behavior"
@@ -15,7 +14,7 @@ class LinearThreshold(DiffusionModel):
 
     def __copy__(self):
         """
-        Deep copy of the diffusion model
+        Deep copy of the diffusion model.
         """
         result = LinearThreshold(self.endorsement_policy)
         if self.sim_graph is not None:
